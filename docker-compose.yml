@@ -1,0 +1,28 @@
+name: babichsavebot
+
+services:
+  bot:
+    build: .
+    image: babichsavebot:local
+    container_name: babichsavebot
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PUID: "1001"
+      PGID: "1001"
+    volumes:
+      - ./data:/app/data
+    # Hard caps so the bot can't starve the host or the other services on it.
+    # Tunable from .env (see README), e.g. after a server upgrade.
+    mem_limit: ${BOT_MEM_LIMIT:-768m}
+    memswap_limit: ${BOT_MEM_LIMIT:-768m}  # no swap: hit the cap -> OOM inside the container -> restart
+    cpus: ${BOT_CPUS:-1.0}
+    cpu_shares: 512       # half the default weight when CPU is contended
+    pids_limit: 256
+    oom_score_adj: 500    # under host memory pressure the bot gets killed first
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
