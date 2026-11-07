@@ -99,10 +99,40 @@ docker compose restart           # перезапуск (заодно подтя
 
 ## Структура
 
-- `bot/links.py` — поиск и нормализация ссылок
-- `bot/downloader.py` — yt-dlp, лимиты, проба видео и превью
-- `bot/delivery.py` — загрузка в Telegram, общий file_id для inline/guest
-- `bot/handlers.py` — личка, группы, inline, guest mode
-- `bot/stickers.py` — видеостикеры и личные паки
-- `bot/housekeeping.py` — периодическая уборка и контроль диска
-- `bot/db.py` — кэш file_id и владелец
+Слои зависят только «внутрь»: `media` ничего не знает о Telegram, `telegram` собирает всё вместе.
+
+```
+bot/
+  __main__.py          запуск: бот, роутеры, фоновые задачи
+  config.py            настройки из .env
+  links.py             разбор и нормализация ссылок, deep link payload
+  db.py                кэш file_id (SQLite) и владелец
+  errors.py            UserError — ошибка с текстом для пользователя
+  jobs.py              счётчик запросов в работе (перезапуск ждёт их)
+  housekeeping.py      уборка temp и кэша, контроль диска, обновления yt-dlp
+  media/               скачивание и обработка, без Telegram
+    downloader.py      download(link) → Video | Album, очередь и лимиты
+    ytdlp.py           опции yt-dlp, ошибки, видео и фото
+    posts.py           фото-посты Instagram, слайдшоу TikTok
+    sticker.py         вырезка стикера (Cut, форма, скорость) и рендер в WEBM
+    ffmpeg.py          проба, превью, конвертация фото
+    workspace.py       временные папки и место на диске
+    models.py          Video, Album, MediaItem
+  telegram/            всё, что про Telegram
+    delivery.py        загрузка и повторная отправка по file_id, общий кэш для inline
+    stickers.py        стикер из видео в чате, личные паки
+    keyboards.py       кнопки и их callback data
+    texts.py           /help и общие тексты
+    messages.py        чтение входящих сообщений
+    handlers/          роутеры: stickers → chats → inline → fallback
+tests/                 юнит-тесты (pytest)
+```
+
+## Тесты и git
+
+```sh
+./test.sh                        # pyflakes + pytest внутри образа бота (там ffmpeg)
+```
+
+История ведётся в git: каждое изменение — отдельный коммит. Новая фича добавляется и в `/help`
+(`bot/telegram/texts.py`, тест `tests/test_texts.py` проверяет, что все фичи там упомянуты).
