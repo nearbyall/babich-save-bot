@@ -2,3 +2,8 @@
 data/
 **/__pycache__/
 assets/
+tests/
+.git/
+.gitignore
+test.sh
+requirements-dev.txt
