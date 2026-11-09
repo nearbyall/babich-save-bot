@@ -14,6 +14,7 @@ class MediaItem:
     height: int | None = None
     duration: int | None = None
     thumbnail: Path | None = None
+    sound: bool = False
 
     @property
     def upload_size(self) -> int:

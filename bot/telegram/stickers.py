@@ -60,7 +60,8 @@ async def _render_and_send(bot: Bot, source: Message, user: User, clip: Clip, cu
     path = await clips.fetch(bot, source, clip, user.id, workdir)
     duration, width, height = clip.duration, clip.width, clip.height
     if not (duration and width and height):
-        width, height, duration = await asyncio.to_thread(ffmpeg.probe, path)
+        streams = await asyncio.to_thread(ffmpeg.probe, path)
+        width, height, duration = streams.width, streams.height, streams.duration
     if duration and cut.start >= duration:
         raise UserError(f"В видео всего {sticker.format_time(duration)}.")
     cut = cut.framed(round_video=clip.round)

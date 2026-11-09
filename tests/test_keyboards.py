@@ -1,14 +1,18 @@
 import pytest
 
 from bot.db import CachedFile, CachedPost
+from bot.media.shazam import Track
 from bot.media.sticker import Cut, Shape
 from bot.telegram.keyboards import (
     CutButton,
+    SoundButton,
+    TrackButton,
     is_kept,
     kept_keyboard,
     post_keyboard,
-    sticker_button,
     sticker_keyboard,
+    track_keyboard,
+    video_keyboard,
 )
 
 
@@ -31,9 +35,22 @@ def test_cut_button_round_trip():
     assert len(CutButton.of(cut).pack()) <= 64
 
 
-def test_sticker_button_starts_from_the_beginning():
-    data = sticker_button().inline_keyboard[0][0].callback_data
-    assert CutButton.unpack(data).cut() == Cut()
+def test_video_keyboard():
+    shazam, sound, sticker = video_keyboard(sound=True).inline_keyboard[0]
+    assert [shazam.text, sound.text, sticker.text] == ["🎵 Шазам", "🎧 Аудио", "🎭 Стикер"]
+    assert TrackButton.unpack(shazam.callback_data) and SoundButton.unpack(sound.callback_data)
+    assert CutButton.unpack(sticker.callback_data).cut() == Cut()
+    assert _labels(video_keyboard(sound=False)) == [["🎭 Стикер"]]
+
+
+def test_track_keyboard_links():
+    full = Track("Monster", "DotEXE", shazam_url="https://shazam/x", apple_music_url="https://apple/x")
+    assert [[(b.text, b.url) for b in row] for row in track_keyboard(full).inline_keyboard] == [
+        [("Shazam", "https://shazam/x"), ("Apple Music", "https://apple/x")],
+        [("Spotify", "https://open.spotify.com/search/DotEXE%20Monster"),
+         ("YouTube Music", "https://music.youtube.com/search?q=DotEXE%20Monster")],
+    ]
+    assert _labels(track_keyboard(Track("T", "A"))) == [["Spotify", "YouTube Music"]]
 
 
 def test_sticker_keyboard_at_the_start_of_a_vertical_video():
@@ -68,7 +85,7 @@ def test_kept_keyboard_links_to_the_pack():
     markup = kept_keyboard(sticker_keyboard(Cut(0, 3, 1, Shape.ORIGINAL), 20, 1080, 1920), "u1_by_bot")
     assert markup.inline_keyboard[-1][0].url == "https://t.me/addstickers/u1_by_bot"
     assert len(markup.inline_keyboard) == 4 and is_kept(markup)
-    assert not is_kept(sticker_button())
+    assert not is_kept(video_keyboard(sound=True))
 
 
 def test_post_keyboard():

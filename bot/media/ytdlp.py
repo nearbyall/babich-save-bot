@@ -159,14 +159,15 @@ def fetch_video(ydl: yt_dlp.YoutubeDL, entry: dict) -> tuple[MediaItem, dict]:
 
 
 def _clip(path: Path, info: dict) -> MediaItem:
-    width, height, duration = ffmpeg.probe(path)
+    streams = ffmpeg.probe(path)
     return MediaItem(
         path=path,
         kind="video",
-        width=width or info.get("width"),
-        height=height or info.get("height"),
-        duration=duration or (round(info["duration"]) if info.get("duration") else None),
-        thumbnail=ffmpeg.thumbnail(path, width, height),
+        width=streams.width or info.get("width"),
+        height=streams.height or info.get("height"),
+        duration=streams.duration or (round(info["duration"]) if info.get("duration") else None),
+        thumbnail=ffmpeg.thumbnail(path, streams.width, streams.height),
+        sound=streams.audio is not None,
     )
 
 

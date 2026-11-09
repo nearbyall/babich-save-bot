@@ -16,7 +16,7 @@ from ...media.downloader import download
 from ...media.models import Download, Video
 from .. import texts
 from ..delivery import send_cached, upload
-from ..keyboards import sticker_button
+from ..keyboards import video_keyboard
 from ..messages import is_from_bot, links_from, mentions, requester, topic
 
 log = logging.getLogger(__name__)
@@ -25,12 +25,15 @@ router = Router(name="chats")
 GROUP_CHATS = {ChatType.GROUP, ChatType.SUPERGROUP}
 
 
-def _sticker_markup(message: Message, media: Download | Cached) -> InlineKeyboardMarkup | None:
-    """Stickers go into the user's own pack, so they're made in DMs only, from single clips."""
+def _video_markup(message: Message, media: Download | Cached) -> InlineKeyboardMarkup | None:
+    """Shazam, sound and sticker buttons go under single clips, in DMs only: stickers fill the user's own pack."""
     if message.chat.type != ChatType.PRIVATE:
         return None
-    clip = isinstance(media, Video) or (isinstance(media, CachedFile) and media.kind in ("video", "animation"))
-    return sticker_button() if clip else None
+    if isinstance(media, Video):
+        return video_keyboard(sound=media.clip.sound)
+    if isinstance(media, CachedFile) and media.kind in ("video", "animation"):
+        return video_keyboard(sound=media.kind == "video")  # Telegram turns silent clips into animations
+    return None
 
 
 async def _send_from_cache(message: Message, link: Link, db: Database) -> bool:
@@ -38,7 +41,7 @@ async def _send_from_cache(message: Message, link: Link, db: Database) -> bool:
         return False
     try:
         await send_cached(message.bot, message.chat.id, cached, texts.caption(link, cached.uploader),
-                          message_thread_id=topic(message), reply_markup=_sticker_markup(message, cached),
+                          message_thread_id=topic(message), reply_markup=_video_markup(message, cached),
                           reply_parameters=message.as_reply_parameters(allow_sending_without_reply=True))
         return True
     except TelegramBadRequest as e:
@@ -61,7 +64,7 @@ async def _download_and_send(message: Message, link: Link, db: Database) -> None
             return
         try:
             _, cached = await upload(message.bot, message.chat.id, media, texts.caption(link, media.uploader),
-                                     reply_markup=_sticker_markup(message, media), message_thread_id=topic(message),
+                                     reply_markup=_video_markup(message, media), message_thread_id=topic(message),
                                      reply_parameters=message.as_reply_parameters(allow_sending_without_reply=True))
         except TelegramAPIError:
             log.exception("failed to upload %s", link.url)

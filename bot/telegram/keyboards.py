@@ -1,10 +1,12 @@
 from dataclasses import replace
+from urllib.parse import quote
 
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from ..db import CachedPost
 from ..links import to_payload
+from ..media.shazam import Track
 from ..media.sticker import LENGTH, MAX_SPEED, MIN_SPEED, Cut, Shape, format_time
 from .texts import post_summary
 
@@ -27,6 +29,14 @@ class CutButton(CallbackData, prefix="stk"):
     def cut(self) -> Cut:
         return Cut(max(0.0, self.start), min(self.length, LENGTH), min(max(self.speed, MIN_SPEED), MAX_SPEED),
                    self.shape)
+
+
+class TrackButton(CallbackData, prefix="trk"):
+    """Recognizes the music in the video it's under."""
+
+
+class SoundButton(CallbackData, prefix="snd"):
+    """Sends the sound of the video it's under as an audio file."""
 
 
 class KeepButton(CallbackData, prefix="stp"):
@@ -55,9 +65,22 @@ def post_keyboard(username: str, post: CachedPost) -> InlineKeyboardMarkup | Non
         text=f"🖼 Весь пост: {post_summary(post)}", url=f"https://t.me/{username}?start={payload}")]])
 
 
-def sticker_button() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="🎭 Сделать стикер", callback_data=CutButton.of(Cut()).pack())]])
+def video_keyboard(sound: bool) -> InlineKeyboardMarkup:
+    """Under a single video in DMs; silent ones get only the sticker button."""
+    buttons = [InlineKeyboardButton(text="🎭 Стикер", callback_data=CutButton.of(Cut()).pack())]
+    if sound:
+        buttons[:0] = [InlineKeyboardButton(text="🎵 Шазам", callback_data=TrackButton().pack()),
+                       InlineKeyboardButton(text="🎧 Аудио", callback_data=SoundButton().pack())]
+    return InlineKeyboardMarkup(inline_keyboard=[buttons])
+
+
+def track_keyboard(track: Track) -> InlineKeyboardMarkup:
+    query = quote(f"{track.artist} {track.title}")
+    links = [("Shazam", track.shazam_url), ("Apple Music", track.apple_music_url),
+             ("Spotify", f"https://open.spotify.com/search/{query}"),
+             ("YouTube Music", f"https://music.youtube.com/search?q={query}")]
+    buttons = [InlineKeyboardButton(text=label, url=url) for label, url in links if url]
+    return InlineKeyboardMarkup(inline_keyboard=[buttons[i:i + 2] for i in range(0, len(buttons), 2)])
 
 
 def describe(cut: Cut, duration: int | None) -> str:
