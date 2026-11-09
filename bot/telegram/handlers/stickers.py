@@ -10,7 +10,8 @@ from aiogram.types import CallbackQuery, Message
 from ...media.sticker import Cut, parse_time
 from .. import texts
 from ..keyboards import CurrentButton, CutButton, KeepButton, describe, is_kept, kept_keyboard
-from ..stickers import add_to_pack, busy, clip_of, make
+from ..clips import clip_of
+from ..stickers import add_to_pack, busy, make
 
 log = logging.getLogger(__name__)
 router = Router(name="stickers")

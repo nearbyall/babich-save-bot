@@ -1,12 +1,9 @@
 """Video stickers from videos in the chat, and the user's own sticker pack."""
 import asyncio
-import contextlib
 import itertools
 import logging
-import shutil
 import time
 import uuid
-from dataclasses import dataclass
 from pathlib import Path
 
 from aiogram import Bot
@@ -16,62 +13,23 @@ from aiogram.utils.chat_action import ChatActionSender
 
 from .. import config, jobs
 from ..errors import UserError
-from ..links import find_links
-from ..media import ffmpeg, sticker, workspace
-from ..media.downloader import download
-from ..media.models import Album
+from ..media import ffmpeg, sticker
 from ..media.sticker import Cut
+from . import clips
+from .clips import Clip, clip_of
 from .keyboards import describe, sticker_keyboard
-from .messages import text_of
 
 log = logging.getLogger(__name__)
 
 EMOJI = "🎬"
 PACK_SIZE = 120
-# Bots can fetch files only up to 20 MB from Telegram; bigger videos are downloaded again by their link
-MAX_TELEGRAM_FILE = 20 * config.MB
 
 _renderers = asyncio.Semaphore(config.MAX_PARALLEL_STICKERS)
-_busy: set[int] = set()
-
-
-@dataclass
-class Clip:
-    file_id: str
-    unique_id: str
-    size: int | None
-    duration: int | None
-    width: int | None
-    height: int | None
-    round: bool
-
-
-def clip_of(message: Message | None) -> Clip | None:
-    if message is None:
-        return None
-    if media := message.video or message.animation:
-        return Clip(media.file_id, media.file_unique_id, media.file_size, media.duration,
-                    media.width, media.height, False)
-    if note := message.video_note:
-        return Clip(note.file_id, note.file_unique_id, note.file_size, note.duration, note.length, note.length, True)
-    doc = message.document
-    if doc and (doc.mime_type or "").startswith("video/"):
-        return Clip(doc.file_id, doc.file_unique_id, doc.file_size, None, None, None, False)
-    return None
+_busy = jobs.Busy()
 
 
 def busy(user_id: int) -> bool:
     return user_id in _busy
-
-
-@contextlib.contextmanager
-def _exclusive(user_id: int):
-    """One sticker job at a time per user."""
-    _busy.add(user_id)
-    try:
-        yield
-    finally:
-        _busy.discard(user_id)
 
 
 async def make(bot: Bot, source: Message, user: User, cut: Cut) -> Message | None:
@@ -82,7 +40,7 @@ async def make(bot: Bot, source: Message, user: User, cut: Cut) -> Message | Non
         await bot.send_message(user.id, "❌ Не вижу видео — пришли его заново.", reply_parameters=reply)
         return None
     try:
-        with jobs.tracked(), _exclusive(user.id), workspace.reusable(f"sticker-{clip.unique_id}") as workdir:
+        with jobs.tracked(), _busy.hold(user.id), clips.workdir(clip) as workdir:
             async with ChatActionSender.choose_sticker(bot=bot, chat_id=user.id):
                 return await _render_and_send(bot, source, user, clip, cut, workdir, reply)
     except UserError as e:
@@ -99,7 +57,7 @@ async def make(bot: Bot, source: Message, user: User, cut: Cut) -> Message | Non
 
 async def _render_and_send(bot: Bot, source: Message, user: User, clip: Clip, cut: Cut, workdir: Path,
                            reply: ReplyParameters) -> Message:
-    path = await _source_file(bot, source, clip, user.id, workdir)
+    path = await clips.fetch(bot, source, clip, user.id, workdir)
     duration, width, height = clip.duration, clip.width, clip.height
     if not (duration and width and height):
         width, height, duration = await asyncio.to_thread(ffmpeg.probe, path)
@@ -120,42 +78,11 @@ async def _render_and_send(bot: Bot, source: Message, user: User, clip: Clip, cu
         dest.unlink(missing_ok=True)
 
 
-async def _source_file(bot: Bot, message: Message, clip: Clip, user_id: int, workdir: Path) -> Path:
-    """The video file, kept in the work dir so the next cuts of it don't fetch it again."""
-    path = workdir / "source"
-    if path.is_file():
-        return path
-    workspace.ensure_free_space()
-    if (clip.size or 0) <= MAX_TELEGRAM_FILE:
-        part = workdir / "source.part"
-        try:
-            await bot.download(clip.file_id, destination=part, timeout=120)
-            return part.rename(path)
-        except TelegramBadRequest as e:  # "file is too big" when the size wasn't known
-            log.info("can't fetch %s from Telegram: %s", clip.unique_id, e)
-    links = find_links(text_of(message))
-    if not links:
-        raise UserError("Видео больше 20 МБ — такие бот не может забрать из Telegram. "
-                        "Пришли ссылку на него или файл поменьше.")
-    media = await download(links[0], user_id)
-    try:
-        if isinstance(media, Album):
-            video = next((item.path for item in media.items if item.kind == "video"), None)
-            if video is None:
-                raise UserError("В этом посте нет видео.")
-        else:
-            video = media.clip.path
-        shutil.move(video, path)
-    finally:
-        media.cleanup()
-    return path
-
-
 async def add_to_pack(bot: Bot, user: User, file_id: str) -> str:
     """Add a sticker to the user's pack (u<id>_by_<bot>, then _2, _3… as they fill up); returns its name."""
     me = await bot.me()
     new = InputSticker(sticker=file_id, format="video", emoji_list=[EMOJI])
-    with _exclusive(user.id):
+    with _busy.hold(user.id):
         for n in itertools.count(1):
             name = f"u{user.id}{f'_{n}' if n > 1 else ''}_by_{me.username}"
             try:

@@ -108,7 +108,7 @@ bot/
   links.py             разбор и нормализация ссылок, deep link payload
   db.py                кэш file_id (SQLite) и владелец
   errors.py            UserError — ошибка с текстом для пользователя
-  jobs.py              счётчик запросов в работе (перезапуск ждёт их)
+  jobs.py              запросы в работе (перезапуск ждёт их), защита от повторных нажатий
   housekeeping.py      уборка temp и кэша, контроль диска, обновления yt-dlp
   media/               скачивание и обработка, без Telegram
     downloader.py      download(link) → Video | Album, очередь и лимиты
@@ -120,6 +120,7 @@ bot/
     models.py          Video, Album, MediaItem
   telegram/            всё, что про Telegram
     delivery.py        загрузка и повторная отправка по file_id, общий кэш для inline
+    clips.py           видео из чата как файл: из Telegram или заново по ссылке, общая папка на всех
     stickers.py        стикер из видео в чате, личные паки
     keyboards.py       кнопки и их callback data
     texts.py           /help и общие тексты

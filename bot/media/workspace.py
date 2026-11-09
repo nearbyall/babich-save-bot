@@ -1,9 +1,10 @@
-"""Temporary work dirs: one per download, plus named ones reused between sticker cuts."""
+"""Temporary work dirs: one per download, plus named ones shared by jobs on the same video."""
 import contextlib
 import logging
 import shutil
 import time
 import uuid
+from collections import Counter
 from pathlib import Path
 
 from .. import config
@@ -11,19 +12,19 @@ from ..errors import UserError
 
 log = logging.getLogger(__name__)
 
-_in_use: set[Path] = set()
+_in_use: Counter[Path] = Counter()
 
 
 def create() -> Path:
     workdir = config.TMP_DIR / uuid.uuid4().hex
     workdir.mkdir(parents=True)
-    _in_use.add(workdir)
+    _in_use[workdir] += 1
     return workdir
 
 
 def remove(workdir: Path) -> None:
     shutil.rmtree(workdir, ignore_errors=True)
-    _in_use.discard(workdir)
+    del _in_use[workdir]
 
 
 @contextlib.contextmanager
@@ -31,11 +32,13 @@ def reusable(name: str):
     """A named work dir that outlives the job; cleanup_stale removes it once it's unused for a while."""
     workdir = config.TMP_DIR / name
     workdir.mkdir(parents=True, exist_ok=True)
-    _in_use.add(workdir)
+    _in_use[workdir] += 1
     try:
         yield workdir
     finally:
-        _in_use.discard(workdir)
+        _in_use[workdir] -= 1
+        if not _in_use[workdir]:
+            del _in_use[workdir]
 
 
 def free_disk() -> int:
