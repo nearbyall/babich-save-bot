@@ -1,153 +1,165 @@
 # @babichsavebot
 
-Telegram-бот: по ссылке скачивает видео и слайдшоу TikTok, Reels, фото и карусели Instagram, YouTube Shorts.
+[Русский](README.ru.md) | **English**
 
-- **Inline (любой чат)** — набрать `@babichsavebot ссылка` и выбрать видео во всплывающем окне:
-  оно уйдёт от тебя с пометкой «via @babichsavebot». Если видео ещё качается, отправится
-  «⏳ Скачиваю…», и это сообщение само превратится в видео.
-- **Guest mode (любой чат)** — отправить `@babichsavebot ссылка` обычным сообщением или ответить
-  `@babichsavebot` на сообщение со ссылкой: бот ответит сам отдельным сообщением.
-- **Личка** — прислать ссылку.
-- **Группа, где бот участник** — `/dl ссылка`.
-- **Шазам и звук (личка)** — кнопки «🎵 Шазам» (что за трек) и «🎧 Аудио» (звук видео отдельным файлом) под видео.
-- **Видеостикеры (личка)** — кнопка «🎭 Стикер» под видео или любое видео, GIF или кружок, присланные боту.
+Telegram bot that downloads TikTok videos and slideshows, Instagram Reels, photos and carousels, and YouTube
+Shorts from a link.
 
-**Фото-посты** (слайдшоу TikTok, фото и карусели Instagram) в личке и группах приходят альбомами по 10
-(и не больше 48 МБ на альбом — лимит запроса Bot API), у слайдшоу следом идёт звук. В inline и guest
-сообщение вмещает один файл: приходит первое фото с кнопкой «🖼 Весь пост» — она открывает личку с ботом
-(`/start tt_<id>` / `ig_<code>`), и там приходит весь пост.
+- **Inline (any chat)**: type `@babichsavebot link` and pick the video in the popup. It's sent from you,
+  marked "via @babichsavebot". If the video is still downloading, «⏳ Скачиваю…» ("downloading…") goes out
+  first and turns into the video by itself.
+- **Guest mode (any chat)**: send `@babichsavebot link` as a regular message, or reply `@babichsavebot` to a
+  message with a link. The bot answers in a separate message of its own.
+- **DM**: send a link.
+- **Group where the bot is a member**: `/dl link`.
+- **Shazam and sound (DM)**: the «🎵 Шазам» (what's the track) and «🎧 Аудио» (the video's sound as a separate
+  file) buttons under a video.
+- **Video stickers (DM)**: the «🎭 Стикер» button under a video, or any video, GIF or round video sent to the
+  bot.
 
-**Шазам**: бот слушает звук видео 12-секундными окнами — середина, потом начало и конец, до первого
-совпадения — через неофициальный API Shazam ([shazamio](https://github.com/shazamio/ShazamIO)) и отвечает
-обложкой с названием, альбомом, годом и ссылками на Shazam, Apple Music, Spotify и YouTube Music. Shazam
-отвечает примерно на 3 запроса в минуту с одного IP: запросы встают в очередь, а результат (и «не узнал»)
-запоминается для каждого видео, так что повторное нажатие отвечает сразу. Под видео без звука (Telegram
-делает из них GIF) кнопок Шазама и аудио нет.
+The bot's buttons and messages are in Russian; `/help` is in both English and Russian.
 
-**Аудио**: звук AAC копируется в M4A без перекодирования (остальное — в AAC 192k), обложка — кадр из видео.
-Если трек уже распознан, файл называется по нему, иначе «Звук из TikTok» и автор видео.
+**Photo posts** (TikTok slideshows, Instagram photos and carousels) arrive in DMs and groups as albums of up to 10
+(and at most 48 MB per album, the Bot API request limit); slideshows are followed by their sound. In inline and
+guest mode a message holds a single file, so the first photo comes with a «🖼 Весь пост» ("whole post") button. It
+opens the DM with the bot (`/start tt_<id>` / `ig_<code>`), and the whole post arrives there.
 
-**Видеостикеры**: бот вырезает 3 секунды (WEBM/VP9, 512 px, до 256 КБ, без звука — требования Telegram) и
-присылает стикер с кнопками (каждое нажатие присылает новый вариант, прошлый удаляется):
+**Shazam**: the bot listens to the video's sound in 12-second windows, until the first match: the middle, then the
+start and the end. It uses Shazam's unofficial API ([shazamio](https://github.com/shazamio/ShazamIO)) and replies
+with the cover art, title, album, year and links to Shazam, Apple Music, Spotify and YouTube Music. Shazam answers
+about 3 requests a minute from one IP, so requests wait in a queue. The result, "not recognized" included, is
+remembered for each video, so a repeated tap answers at once. Videos without sound (Telegram turns them into GIFs)
+get no Shazam or audio buttons.
 
-- ⏪ ◀️ ▶️ ⏩ — сдвиг на треть стикера или на целый (1 и 3 с, при ×2 — 2 и 6 с);
-- 🐢 / 🐇 — скорость вдвое медленнее или быстрее, от ×0.25 (0.75 с видео) до ×8 (24 с видео в стикере);
-- Ориг · 1:1 · 16:9 · 9:16 · ⚪ Круг — форма: обрезка по центру, круг — с прозрачными углами
-  (совпадающая с исходником пропорция не показывается, текущая отмечена ✓);
-- «➕ В мой пак» — в личный пак `u<id>_by_babichsavebot` (по 120 штук, дальше `_2`, `_3`…).
+**Audio**: AAC sound is copied into M4A without re-encoding (anything else becomes AAC 192k), and the cover is a
+frame of the video. If the track has been recognized, the file is named after it, otherwise «Звук из TikTok»
+("sound from TikTok") plus the video's author.
 
-Точный момент — ответить на видео временем: `0:12` или `0:12-0:14`; отрезок длиннее 3 секунд бот сам
-ускоряет, чтобы влез (`0:10-0:20` → ×4). Кружки по умолчанию становятся круглыми стикерами. Всё состояние
-вырезки лежит в callback data кнопок, в базе ничего не хранится. Исходник бот берёт из Telegram (ботам отдают файлы до 20 МБ), а видео больше —
-скачивает заново по ссылке из подписи; исходник живёт ~15 минут, чтобы сдвиги, Шазам и аудио не качали его снова.
+**Video stickers**: the bot cuts 3 seconds (WEBM/VP9, 512 px, up to 256 KB, no sound, as Telegram requires) and
+sends the sticker with buttons. Each tap sends a new version and deletes the previous one:
 
-Видео качает [yt-dlp](https://github.com/yt-dlp/yt-dlp): H.264/MP4 до 1080p, а если не влезает в лимит
-Bot API (50 МБ) — качество ниже. Отправленные file_id кэшируются в SQLite, повторная ссылка отдаётся
-мгновенно. Сами видео на диске не хранятся: временный файл удаляется сразу после отправки.
+- ⏪ ◀️ ▶️ ⏩: move by a third of a sticker or a whole one (1 and 3 s, or 2 and 6 s at ×2);
+- 🐢 / 🐇: half or double speed, from ×0.25 (0.75 s of video) to ×8 (24 s of video in the sticker);
+- Ориг (original) · 1:1 · 16:9 · 9:16 · ⚪ Круг (circle): the shape. Other ratios are cropped around the center,
+  and the circle gets transparent corners. The ratio that matches the source isn't shown, and the current one is
+  marked ✓;
+- «➕ В мой пак» ("add to my pack"): adds it to the personal pack `u<id>_by_babichsavebot` (120 stickers each,
+  then `_2`, `_3`…).
 
-## Деплой
+To pick an exact moment, reply to the video with a time: `0:12` or `0:12-0:14`. The bot speeds up a range longer
+than 3 seconds so it fits (`0:10-0:20` → ×4). Round videos become round stickers by default. The whole state of a
+cut lives in the buttons' callback data; nothing is stored in the database. The bot takes the source from
+Telegram, which gives bots files up to 20 MB, and downloads bigger videos again by the link in the caption. The
+source is kept for ~15 minutes, so moves, Shazam and audio don't download it again.
+
+Videos are downloaded by [yt-dlp](https://github.com/yt-dlp/yt-dlp) as H.264/MP4 up to 1080p, or in lower quality
+when that doesn't fit the Bot API limit (50 MB). Sent file_ids are cached in SQLite, so a repeated link is
+delivered instantly. The videos themselves aren't kept on disk: the temp file is deleted right after sending.
+
+## Deploy
 
 ```sh
-./deploy.sh                      # пересобрать и перезапустить (не оставляет build cache)
-docker compose logs -f           # логи
-docker compose restart           # перезапуск (заодно подтянет свежий yt-dlp)
+./deploy.sh                      # rebuild and restart (leaves no build cache)
+docker compose logs -f           # logs
+docker compose restart           # restart (also picks up a fresh yt-dlp)
 ```
 
-`deploy.sh` собирает образ во временном BuildKit и удаляет его вместе с кэшем, плюс старые версии
-образа бота — на диске остаётся только текущий образ (~0.7 ГБ). `docker compose up --build` тоже
-работает, но оставляет build cache.
+`deploy.sh` builds the image in a temporary BuildKit and then removes it together with its cache and the old
+versions of the bot image. Only the current image (~0.7 GB) stays on disk. `docker compose up --build` works too,
+but leaves build cache behind.
 
-Контейнер поднимается сам после сбоев и ребута. При старте обновляет yt-dlp, а раз в 6 часов
-проверяет PyPI и перезапускается, когда выходит новая версия.
+The container comes back by itself after crashes and reboots. On start it updates yt-dlp, and every 6 hours it
+checks PyPI and restarts when a new version is out.
 
-## Настройка в @BotFather
+## @BotFather settings
 
-- **Inline mode**: `/setinline` → бот → подсказка, например `ссылка на TikTok / Reels / Shorts`.
-- **Inline feedback**: `/setinlinefeedback` → бот → Enabled. Без него «⏳ Скачиваю…» превращается
-  в видео только по кнопке «🔄 Обновить».
-- **Guest mode**: Mini App → бот → Bot Settings → Guest Mode.
-- Описание и «about» задаются только там (`/setdescription`, `/setabouttext`) — бот их не трогает.
+- **Inline mode**: `/setinline` → bot → a placeholder such as `ссылка на TikTok / Reels / Shorts`.
+- **Inline feedback**: `/setinlinefeedback` → bot → Enabled. Without it «⏳ Скачиваю…» turns into the video only
+  when someone taps «🔄 Обновить» ("refresh").
+- **Guest mode**: Mini App → bot → Bot Settings → Guest Mode.
+- The description and "about" text are set only there (`/setdescription`, `/setabouttext`); the bot doesn't
+  touch them.
 
-## Защита сервера
+## Server protection
 
-| Что | Как |
+| What | How |
 |---|---|
-| Память | лимит контейнера `BOT_MEM_LIMIT` (768m), без свопа; при упоре убивается и перезапускается только бот; при нехватке памяти на хосте ядро первым убивает бота (`oom_score_adj`) |
-| CPU | лимит `BOT_CPUS` (1.0), половинный вес при конкуренции, `nice 10` и низкий приоритет диска |
-| Параллельность | по умолчанию 2 загрузки одновременно, YouTube — по одной (deno съедает ~250 МБ); пик памяти ~500 МБ. На сервере 2 CPU / 8 ГБ: 3 загрузки, YouTube по две — пик ~900 МБ. Стикеры — по 2 одновременно, ~2 с одного ядра на каждый |
-| Очередь | не больше 12 запросов в работе и 3 на одного человека, остальным — «попробуй позже» |
-| Время | загрузка обрывается через 3 минуты; видео длиннее 10 минут отсекаются до скачивания |
-| Диск | если свободно меньше 1 ГБ — загрузки на паузе, временные файлы чистятся, владельцу приходит уведомление |
-| Мусор | каждые 10 минут: удаляются брошенные временные файлы, записи кэша старше 30 дней (максимум 20 000), кэш yt-dlp старше 7 дней |
-| Логи | ротация 3 × 10 МБ |
+| Memory | container limit `BOT_MEM_LIMIT` (768m), no swap. Hitting it kills and restarts only the bot, and when the host runs out of memory, the kernel kills the bot first (`oom_score_adj`) |
+| CPU | limit `BOT_CPUS` (1.0), half weight under contention, `nice 10` and low disk priority |
+| Concurrency | 2 downloads at once by default, YouTube one at a time (deno takes ~250 MB), for a memory peak of ~500 MB. On the 2 CPU / 8 GB server: 3 downloads, YouTube two at a time, a peak of ~900 MB. Stickers: 2 at once, ~2 s of one core each |
+| Queue | at most 12 requests in progress and 3 per person; anyone over the limit is told to try later |
+| Time | a download is cut off after 3 minutes; videos longer than 10 minutes are turned away before downloading |
+| Disk | below 1 GB free, downloads pause, temp files are cleaned up and the owner gets a notification |
+| Cleanup | every 10 minutes the bot removes abandoned temp files, cache entries older than 30 days (20,000 at most) and yt-dlp cache older than 7 days |
+| Logs | rotated, 3 × 10 MB |
 
-## Переменные `.env`
+## `.env` variables
 
-| Переменная | По умолчанию | Назначение |
+| Variable | Default | Purpose |
 |---|---|---|
-| `TELEGRAM_BOT_TOKEN` | — | токен бота (обязательно) |
-| `BOT_MEM_LIMIT` | `768m` | лимит памяти контейнера |
-| `BOT_CPUS` | `1.0` | лимит CPU контейнера |
-| `MAX_PARALLEL_DOWNLOADS` | `2` | одновременных загрузок |
-| `MAX_PARALLEL_YOUTUBE` | `1` | из них одновременно с YouTube (каждая ~360 МБ) |
-| `MAX_PARALLEL_STICKERS` | `2` | одновременных нарезок стикеров |
-| `MAX_QUEUE` / `MAX_JOBS_PER_USER` | `12` / `3` | размер очереди всего / на человека |
-| `MAX_DURATION_SEC` | `600` | максимальная длина видео |
-| `DOWNLOAD_TIMEOUT_SEC` | `180` | обрыв зависшей загрузки |
-| `MIN_FREE_DISK_MB` | `1024` | ниже — загрузки на паузе |
-| `CACHE_TTL_DAYS` | `30` | сколько хранить file_id |
-| `STORAGE_CHAT_ID` | — | канал (бот — админ), куда загружаются видео для inline/guest. Без него — личка вызвавшего или владельца, сообщение сразу удаляется |
-| `OWNER_ID` | первый, кто написал боту | кому слать уведомления и куда загружать в крайнем случае |
+| `TELEGRAM_BOT_TOKEN` | — | bot token (required) |
+| `BOT_MEM_LIMIT` | `768m` | container memory limit |
+| `BOT_CPUS` | `1.0` | container CPU limit |
+| `MAX_PARALLEL_DOWNLOADS` | `2` | downloads at once |
+| `MAX_PARALLEL_YOUTUBE` | `1` | how many of them may be from YouTube (~360 MB each) |
+| `MAX_PARALLEL_STICKERS` | `2` | sticker renders at once |
+| `MAX_QUEUE` / `MAX_JOBS_PER_USER` | `12` / `3` | queue size in total / per person |
+| `MAX_DURATION_SEC` | `600` | longest video allowed |
+| `DOWNLOAD_TIMEOUT_SEC` | `180` | when a hung download is cut off |
+| `MIN_FREE_DISK_MB` | `1024` | below this, downloads pause |
+| `CACHE_TTL_DAYS` | `30` | how long file_ids are kept |
+| `STORAGE_CHAT_ID` | — | channel (with the bot as admin) where videos for inline and guest mode are uploaded. Without it they go to the DM of whoever asked, or of the owner, and the message is deleted right away |
+| `OWNER_ID` | the first person to message the bot | who gets notifications and where uploads go as a last resort |
 
-После правки `.env`: `docker compose up -d`.
+After editing `.env`: `docker compose up -d`.
 
-Если Instagram начнёт требовать вход, положите cookies в формате Netscape в `data/cookies.txt`.
+If Instagram starts asking for a login, put cookies in Netscape format into `data/cookies.txt`.
 
-## Переезд на другой сервер
+## Moving to another server
 
-Скопировать папку проекта вместе с `.env` и `data/`, на старом сервере `docker compose down`
-(два экземпляра с одним токеном не работают), на новом — `./deploy.sh`.
+Copy the project folder together with `.env` and `data/`. Run `docker compose down` on the old server, since two
+instances with the same token don't work, then `./deploy.sh` on the new one.
 
-## Структура
+## Structure
 
-Слои зависят только «внутрь»: `media` ничего не знает о Telegram, `telegram` собирает всё вместе.
+Layers depend only inwards: `media` knows nothing about Telegram, and `telegram` puts everything together.
 
 ```
 bot/
-  __main__.py          запуск: бот, роутеры, фоновые задачи
-  config.py            настройки из .env
-  links.py             разбор и нормализация ссылок, deep link payload
-  db.py                кэш file_id (SQLite) и владелец
-  errors.py            UserError — ошибка с текстом для пользователя
-  jobs.py              запросы в работе (перезапуск ждёт их), защита от повторных нажатий
-  housekeeping.py      уборка temp и кэша, контроль диска, обновления yt-dlp
-  media/               скачивание и обработка, без Telegram
-    downloader.py      download(link) → Video | Album, очередь и лимиты
-    ytdlp.py           опции yt-dlp, ошибки, видео и фото
-    posts.py           фото-посты Instagram, слайдшоу TikTok
-    sticker.py         вырезка стикера (Cut, форма, скорость) и рендер в WEBM
-    shazam.py          распознавание трека: окна, лимит запросов Shazam
-    audio.py           звук видео: M4A-файл и PCM для Шазама
-    ffmpeg.py          проба (размер, длительность, звук), превью, конвертация фото
-    workspace.py       временные папки и место на диске
+  __main__.py          startup: bot, routers, background tasks
+  config.py            settings from .env
+  links.py             parsing and normalizing links, deep link payloads
+  db.py                file_id cache (SQLite) and the owner
+  errors.py            UserError, an error with a message for the user
+  jobs.py              requests in progress (a restart waits for them), guard against repeated taps
+  housekeeping.py      temp and cache cleanup, disk watch, yt-dlp updates
+  media/               downloading and processing, no Telegram
+    downloader.py      download(link) → Video | Album, queue and limits
+    ytdlp.py           yt-dlp options, errors, videos and photos
+    posts.py           Instagram photo posts, TikTok slideshows
+    sticker.py         sticker cut (Cut, shape, speed) and rendering to WEBM
+    shazam.py          track recognition: windows, Shazam's rate limit
+    audio.py           a video's sound: the M4A file and PCM for Shazam
+    ffmpeg.py          probing (size, duration, sound), thumbnails, photo conversion
+    workspace.py       temp dirs and disk space
     models.py          Video, Album, MediaItem
-  telegram/            всё, что про Telegram
-    delivery.py        загрузка и повторная отправка по file_id, общий кэш для inline
-    clips.py           видео из чата как файл: из Telegram или заново по ссылке, общая папка на всех
-    stickers.py        стикер из видео в чате, личные паки
-    sounds.py          Шазам и аудио из видео в чате
-    keyboards.py       кнопки и их callback data
-    texts.py           /help и общие тексты
-    messages.py        чтение входящих сообщений
-    handlers/          роутеры: stickers → sounds → chats → inline → fallback
-tests/                 юнит-тесты (pytest)
+  telegram/            everything about Telegram
+    delivery.py        uploading and resending by file_id, shared cache for inline
+    clips.py           a video from the chat as a file: from Telegram or by its link again, one dir for all jobs
+    stickers.py        a sticker from a video in the chat, personal packs
+    sounds.py          Shazam and audio from a video in the chat
+    keyboards.py       buttons and their callback data
+    texts.py           /help and shared texts
+    messages.py        reading incoming messages
+    handlers/          routers: stickers → sounds → chats → inline → fallback
+tests/                 unit tests (pytest)
 ```
 
-## Тесты и git
+## Tests and git
 
 ```sh
-./test.sh                        # pyflakes + pytest внутри образа бота (там ffmpeg)
+./test.sh                        # pyflakes + pytest inside the bot image (it has ffmpeg)
 ```
 
-История ведётся в git: каждое изменение — отдельный коммит. Новая фича добавляется и в `/help`
-(`bot/telegram/texts.py`, тест `tests/test_texts.py` проверяет, что все фичи там упомянуты).
+History is kept in git, one commit per change. A new feature also goes into `/help` (`bot/telegram/texts.py`),
+and `tests/test_texts.py` checks that every feature is mentioned there.
