@@ -15,6 +15,13 @@ log = logging.getLogger(__name__)
 _in_use: Counter[Path] = Counter()
 
 
+def reset() -> None:
+    """Start with an empty dir of our own: work dirs of the previous run are useless, and a dir
+    created on demand by some other process (say, a root shell in the container) would lock us out."""
+    shutil.rmtree(config.TMP_DIR, ignore_errors=True)
+    config.TMP_DIR.mkdir(parents=True, exist_ok=True)
+
+
 def create() -> Path:
     workdir = config.TMP_DIR / uuid.uuid4().hex
     workdir.mkdir(parents=True)

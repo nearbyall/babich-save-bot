@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import shutil
 
 import yt_dlp
 from aiogram import Bot, Dispatcher
@@ -11,6 +10,7 @@ from aiogram.types import BotCommand, BotCommandScopeAllGroupChats, BotCommandSc
 
 from . import config, housekeeping
 from .db import Database
+from .media import workspace
 from .telegram.handlers import router
 
 log = logging.getLogger("bot")
@@ -37,7 +37,7 @@ async def setup_commands(bot: Bot) -> None:
 async def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     logging.getLogger("aiogram.event").setLevel(logging.WARNING)
-    shutil.rmtree(config.TMP_DIR, ignore_errors=True)
+    workspace.reset()
 
     bot = Bot(config.TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML, link_preview_is_disabled=True))
     db = Database()
