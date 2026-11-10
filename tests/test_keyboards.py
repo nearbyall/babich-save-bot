@@ -5,11 +5,13 @@ from bot.media.shazam import Track
 from bot.media.sticker import Cut, Shape
 from bot.telegram.keyboards import (
     CutButton,
+    RoundButton,
     SoundButton,
     TrackButton,
     is_kept,
     kept_keyboard,
     post_keyboard,
+    round_keyboard,
     sticker_keyboard,
     track_keyboard,
     video_keyboard,
@@ -36,11 +38,30 @@ def test_cut_button_round_trip():
 
 
 def test_video_keyboard():
-    shazam, sound, sticker = video_keyboard(sound=True).inline_keyboard[0]
-    assert [shazam.text, sound.text, sticker.text] == ["🎵 Шазам", "🎧 Аудио", "🎭 Стикер"]
+    (shazam, sound), (sticker, round_video) = video_keyboard(sound=True).inline_keyboard
+    assert [shazam.text, sound.text, sticker.text, round_video.text] == ["🎵 Шазам", "🎧 Аудио", "🎭 Стикер",
+                                                                         "⚪ Кружок"]
     assert TrackButton.unpack(shazam.callback_data) and SoundButton.unpack(sound.callback_data)
     assert CutButton.unpack(sticker.callback_data).cut() == Cut()
-    assert _labels(video_keyboard(sound=False)) == [["🎭 Стикер"]]
+    assert RoundButton.unpack(round_video.callback_data).start == 0
+
+
+def test_silent_and_round_videos_get_fewer_buttons():
+    assert _labels(video_keyboard(sound=False)) == [["🎭 Стикер", "⚪ Кружок"]]
+    assert _labels(video_keyboard(sound=True, round_video=True)) == [["🎵 Шазам", "🎧 Аудио"], ["🎭 Стикер"]]
+
+
+@pytest.mark.parametrize("start, duration, buttons", [
+    (0, 45, None),
+    (0, 60, None),
+    (0, 150, [("1:00–2:00 ▶️", 60)]),
+    (60, 150, [("◀️ 0:00–1:00", 0), ("2:00–2:30 ▶️", 120)]),
+    (120, 150, [("◀️ 1:00–2:00", 60)]),
+])
+def test_round_keyboard_moves_a_minute(start, duration, buttons):
+    markup = round_keyboard(start, duration)
+    found = markup and [(b.text, RoundButton.unpack(b.callback_data).start) for b in markup.inline_keyboard[0]]
+    assert found == buttons
 
 
 def test_track_keyboard_links():

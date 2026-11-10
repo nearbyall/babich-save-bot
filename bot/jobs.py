@@ -1,7 +1,11 @@
-"""Requests in progress, so a restart for a yt-dlp update can wait for them to finish."""
+"""Jobs in progress: counted so a restart for a yt-dlp update can wait for them, and kept from piling up."""
+import asyncio
 import contextlib
 
+from . import config
+
 _active = 0
+renders = asyncio.Semaphore(config.MAX_PARALLEL_RENDERS)
 
 
 def active() -> int:

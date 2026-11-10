@@ -6,6 +6,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from ..db import CachedPost
 from ..links import to_payload
+from ..media import rounds
 from ..media.shazam import Track
 from ..media.sticker import LENGTH, MAX_SPEED, MIN_SPEED, Cut, Shape, format_time
 from .texts import post_summary
@@ -39,6 +40,11 @@ class SoundButton(CallbackData, prefix="snd"):
     """Sends the sound of the video it's under as an audio file."""
 
 
+class RoundButton(CallbackData, prefix="rnd"):
+    """Makes a round video of a minute of the video from `start`."""
+    start: int = 0
+
+
 class KeepButton(CallbackData, prefix="stp"):
     """Adds the sticker it's under to the user's pack."""
 
@@ -65,13 +71,31 @@ def post_keyboard(username: str, post: CachedPost) -> InlineKeyboardMarkup | Non
         text=f"🖼 Весь пост: {post_summary(post)}", url=f"https://t.me/{username}?start={payload}")]])
 
 
-def video_keyboard(sound: bool) -> InlineKeyboardMarkup:
-    """Under a single video in DMs; silent ones get only the sticker button."""
-    buttons = [InlineKeyboardButton(text="🎭 Стикер", callback_data=CutButton.of(Cut()).pack())]
+def video_keyboard(sound: bool, round_video: bool = False) -> InlineKeyboardMarkup:
+    """Under a single video in DMs. Silent ones get no Shazam and audio, round ones no round button."""
+    rows = []
     if sound:
-        buttons[:0] = [InlineKeyboardButton(text="🎵 Шазам", callback_data=TrackButton().pack()),
-                       InlineKeyboardButton(text="🎧 Аудио", callback_data=SoundButton().pack())]
-    return InlineKeyboardMarkup(inline_keyboard=[buttons])
+        rows.append([InlineKeyboardButton(text="🎵 Шазам", callback_data=TrackButton().pack()),
+                     InlineKeyboardButton(text="🎧 Аудио", callback_data=SoundButton().pack())])
+    rows.append([InlineKeyboardButton(text="🎭 Стикер", callback_data=CutButton.of(Cut()).pack())])
+    if not round_video:
+        rows[-1].append(InlineKeyboardButton(text="⚪ Кружок", callback_data=RoundButton().pack()))
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def round_keyboard(start: int, duration: int | None) -> InlineKeyboardMarkup | None:
+    """Under a round video of a longer video: the minutes before and after it."""
+    buttons = []
+    if start > 0:
+        before = max(0, start - rounds.LENGTH)
+        buttons.append(InlineKeyboardButton(text=f"◀️ {format_time(before)}–{format_time(start)}",
+                                            callback_data=RoundButton(start=before).pack()))
+    after = start + rounds.LENGTH
+    if duration and after < duration:
+        end = min(after + rounds.LENGTH, duration)
+        buttons.append(InlineKeyboardButton(text=f"{format_time(after)}–{format_time(end)} ▶️",
+                                            callback_data=RoundButton(start=after).pack()))
+    return InlineKeyboardMarkup(inline_keyboard=[buttons]) if buttons else None
 
 
 def track_keyboard(track: Track) -> InlineKeyboardMarkup:

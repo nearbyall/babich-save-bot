@@ -33,7 +33,8 @@ MAX_POST_ITEMS = 35  # TikTok slideshows hold up to 35 pictures, Instagram carou
 MAX_PARALLEL_DOWNLOADS = int(os.getenv("MAX_PARALLEL_DOWNLOADS", "2"))
 # Each YouTube download runs a ~250 MB deno process to solve its challenges
 MAX_PARALLEL_YOUTUBE = int(os.getenv("MAX_PARALLEL_YOUTUBE", "1"))
-MAX_PARALLEL_STICKERS = int(os.getenv("MAX_PARALLEL_STICKERS", "2"))
+# Stickers and round videos at once, a CPU core each
+MAX_PARALLEL_RENDERS = int(os.getenv("MAX_PARALLEL_RENDERS", "2"))
 MAX_QUEUE = int(os.getenv("MAX_QUEUE", "12"))
 MAX_JOBS_PER_USER = int(os.getenv("MAX_JOBS_PER_USER", "3"))
 DOWNLOAD_TIMEOUT = int(os.getenv("DOWNLOAD_TIMEOUT_SEC", "180"))

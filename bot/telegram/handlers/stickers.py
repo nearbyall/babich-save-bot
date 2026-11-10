@@ -10,7 +10,7 @@ from aiogram.types import CallbackQuery, Message
 from ...media.sticker import Cut, parse_time
 from .. import texts
 from ..keyboards import CurrentButton, CutButton, KeepButton, describe, is_kept, kept_keyboard
-from ..clips import clip_of
+from ..clips import clip_of, video_message
 from ..stickers import add_to_pack, busy, make
 
 log = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ async def cut_pressed(callback: CallbackQuery, callback_data: CutButton, bot: Bo
         return
     cut = callback_data.cut()
     redo = message.sticker is not None
-    source = message.reply_to_message if redo else message
+    source = video_message(message)
     if source is None:
         await callback.answer("Видео удалено — пришли его заново.", show_alert=True)
         return
@@ -84,12 +84,3 @@ async def time_sent(message: Message, bot: Bot) -> None:
         await message.reply(texts.STICKER_BUSY)
         return
     await make(bot, source, message.from_user, Cut.covering(*parse_time(message.text)))
-
-
-@router.message(F.video | F.animation | F.video_note | F.document.mime_type.startswith("video/"))
-async def video_sent(message: Message, bot: Bot) -> None:
-    """Any video, GIF or round video sent or forwarded to the bot becomes a sticker."""
-    if busy(message.from_user.id):
-        await message.reply(texts.STICKER_BUSY)
-        return
-    await make(bot, message, message.from_user, Cut())

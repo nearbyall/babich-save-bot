@@ -9,7 +9,7 @@ from pathlib import Path
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.types import Message
+from aiogram.types import Message, ReplyParameters
 
 from .. import config
 from ..errors import UserError
@@ -52,11 +52,33 @@ def clip_of(message: Message | None) -> Clip | None:
     return None
 
 
+def video_message(message: Message | None) -> Message | None:
+    """The message with the video a button works on: the one it's under, or else the one that replies to,
+    as the bot's stickers do and the buttons it puts under videos sent to it."""
+    if message is None or clip_of(message):
+        return message
+    return message.reply_to_message if clip_of(message.reply_to_message) else None
+
+
 @contextlib.contextmanager
 def workdir(clip: Clip):
     """A work dir shared by all jobs on the clip, kept for a while so the next ones don't fetch it again."""
     with workspace.reusable(f"clip-{clip.unique_id}") as path:
         yield path
+
+
+@contextlib.asynccontextmanager
+async def errors_in_reply(bot: Bot, chat_id: int, reply: ReplyParameters, failure: str):
+    """Errors of a job on a video go to the chat in reply to it."""
+    try:
+        yield
+        return
+    except UserError as e:
+        text = str(e)
+    except Exception:
+        log.exception(failure)
+        text = failure
+    await bot.send_message(chat_id, f"❌ {text}", reply_parameters=reply)
 
 
 async def fetch(bot: Bot, message: Message, clip: Clip, user_id: int, workdir: Path) -> Path:

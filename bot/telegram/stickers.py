@@ -11,7 +11,7 @@ from aiogram.exceptions import TelegramAPIError, TelegramBadRequest
 from aiogram.types import FSInputFile, InputSticker, Message, ReplyParameters, User
 from aiogram.utils.chat_action import ChatActionSender
 
-from .. import config, jobs
+from .. import jobs
 from ..errors import UserError
 from ..media import ffmpeg, sticker
 from ..media.sticker import Cut
@@ -24,7 +24,6 @@ log = logging.getLogger(__name__)
 EMOJI = "🎬"
 PACK_SIZE = 120
 
-_renderers = asyncio.Semaphore(config.MAX_PARALLEL_STICKERS)
 _busy = jobs.Busy()
 
 
@@ -68,7 +67,7 @@ async def _render_and_send(bot: Bot, source: Message, user: User, clip: Clip, cu
     dest = workdir / f"{uuid.uuid4().hex}.webm"
     try:
         started = time.monotonic()
-        async with _renderers:
+        async with jobs.renders:
             await asyncio.to_thread(sticker.render, path, dest, cut)
         log.info("sticker from %s, %s %s: %d KB, %.1fs", clip.unique_id, describe(cut, duration), cut.shape,
                  dest.stat().st_size // 1024, time.monotonic() - started)

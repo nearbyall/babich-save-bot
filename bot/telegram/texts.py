@@ -11,6 +11,7 @@ NO_LINKS = (
 FAILED = "Не удалось скачать видео. Попробуй ещё раз чуть позже."
 STICKER_BUSY = "Подожди, ещё делаю предыдущий стикер."
 NO_TRACK = "🤷 Не узнал трек — похоже, это оригинальный звук или речь."
+VIDEO_ACTIONS = "🎬 Что сделать с этим видео?"
 
 
 def help_text(username: str) -> str:
@@ -21,22 +22,23 @@ def help_text(username: str) -> str:
         f"💬 Any chat: type <code>@{username} link</code> and tap the result, or just send it. "
         "Photo posts show the first photo and a button for the whole post.\n"
         "👥 Groups I'm in: <code>/dl link</code>, or reply <code>/dl</code> to a message with a link.\n"
-        "🎵 Under a video in our chat: «🎵 Шазам» finds out what track is playing, "
-        "«🎧 Аудио» sends its sound as an audio file.\n"
-        "🎭 Video stickers: tap «🎭 Стикер» under a video, or send me any video, GIF or round video. "
-        "Buttons under the sticker move it, change the speed (×0.25–×8) and the shape (1:1, 16:9, 9:16, circle), "
-        "and add it to your own sticker pack. Reply to the video with <code>0:12</code> or "
-        "<code>0:12-0:20</code> to cut from that moment.\n\n"
+        "🎬 Under a video in our chat: «🎵 Шазам» finds out what track is playing, "
+        "«🎧 Аудио» sends its sound as an audio file, «⚪ Кружок» makes a round video of it, a minute at a time. "
+        "Send or forward me any video, GIF or round video to get these buttons under it too.\n"
+        "🎭 Video stickers: tap «🎭 Стикер» under a video. Buttons under the sticker move it, change the speed "
+        "(×0.25–×8) and the shape (1:1, 16:9, 9:16, circle), and add it to your own sticker pack. "
+        "Reply to the video with <code>0:12</code> or <code>0:12-0:20</code> to cut from that moment.\n\n"
         "🇷🇺 <b>Видео и фото из TikTok, Instagram и YouTube Shorts</b>\n"
         "📥 Пришли ссылку — пришлю видео, фото-пост, карусель или слайдшоу со звуком.\n"
         f"💬 Любой чат: набери <code>@{username} ссылка</code> и нажми на результат или просто отправь. "
         "У фото-постов — первое фото и кнопка «Весь пост».\n"
         "👥 Группы, где я есть: <code>/dl ссылка</code> или ответь <code>/dl</code> на сообщение со ссылкой.\n"
-        "🎵 Под видео в личке: «🎵 Шазам» — узнать, что за трек, «🎧 Аудио» — звук отдельным файлом.\n"
-        "🎭 Видеостикеры: «🎭 Стикер» под видео или пришли любое видео, GIF или кружок. "
-        "Кнопки под стикером двигают его, меняют скорость (×0.25–×8) и форму (1:1, 16:9, 9:16, круг) "
-        "и добавляют в твой стикерпак. Ответь на видео <code>0:12</code> или <code>0:12-0:20</code> — "
-        "вырежу с этого места."
+        "🎬 Под видео в личке: «🎵 Шазам» — узнать, что за трек, «🎧 Аудио» — звук отдельным файлом, "
+        "«⚪ Кружок» — видеосообщение, по минуте. Пришли или перешли мне любое видео, GIF или кружок — "
+        "под ним будут те же кнопки.\n"
+        "🎭 Видеостикеры: «🎭 Стикер» под видео. Кнопки под стикером двигают его, меняют скорость (×0.25–×8) "
+        "и форму (1:1, 16:9, 9:16, круг) и добавляют в твой стикерпак. Ответь на видео <code>0:12</code> "
+        "или <code>0:12-0:20</code> — вырежу с этого места."
     )
 
 

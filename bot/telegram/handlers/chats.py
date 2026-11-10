@@ -107,6 +107,14 @@ async def download_command(message: Message, bot: Bot, db: Database) -> None:
     await handle_links(message, links, db)
 
 
+@router.message(F.chat.type == ChatType.PRIVATE,
+                F.video | F.animation | F.video_note | F.document.mime_type.startswith("video/"))
+async def video_sent(message: Message) -> None:
+    """A video, GIF or round video sent or forwarded to the bot gets the buttons downloaded videos have."""
+    markup = video_keyboard(sound=message.animation is None, round_video=message.video_note is not None)
+    await message.reply(texts.VIDEO_ACTIONS, reply_markup=markup)
+
+
 @router.message(F.chat.type == ChatType.PRIVATE)
 async def private_message(message: Message, bot: Bot, db: Database) -> None:
     _remember_owner(message, db)

@@ -1,6 +1,5 @@
 """The music in videos in the chat (Shazam) and their sound as audio files."""
 import asyncio
-import contextlib
 import logging
 import re
 import uuid
@@ -12,12 +11,12 @@ from aiogram.types import FSInputFile, LinkPreviewOptions, Message, ReplyParamet
 from aiogram.utils.chat_action import ChatActionSender
 
 from .. import jobs
-from ..errors import UserError
 from ..media import audio, ffmpeg, shazam
 from ..media.shazam import Track
 from . import clips, texts
 from .clips import Clip
 from .keyboards import track_keyboard
+from .messages import is_from_bot
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +34,7 @@ def busy(user_id: int) -> bool:
 async def identify(bot: Bot, source: Message, clip: Clip, user: User) -> None:
     """Reply to the video with the track playing in it."""
     reply = _reply_to(source)
-    async with _errors_in_reply(bot, user.id, reply, "Не получилось распознать трек."):
+    async with clips.errors_in_reply(bot, user.id, reply, "Не получилось распознать трек."):
         with jobs.tracked(), _listening.hold(user.id):
             track = await _recognize(bot, source, clip, user.id)
             await _send_track(bot, user.id, track, reply)
@@ -44,11 +43,13 @@ async def identify(bot: Bot, source: Message, clip: Clip, user: User) -> None:
 async def send_sound(bot: Bot, source: Message, clip: Clip, user: User) -> None:
     """Reply to the video with its sound as an audio file."""
     reply = _reply_to(source)
-    async with _errors_in_reply(bot, user.id, reply, "Не получилось достать звук."):
+    async with clips.errors_in_reply(bot, user.id, reply, "Не получилось достать звук."):
         with jobs.tracked(), _extracting.hold(user.id), clips.workdir(clip) as workdir:
             async with ChatActionSender.upload_voice(bot=bot, chat_id=user.id):
                 path = await clips.fetch(bot, source, clip, user.id, workdir)
-                title, performer = texts.sound_names(source.caption, _known.get(clip.unique_id))
+                # Only the bot's own captions name the platform and the author
+                caption = source.caption if is_from_bot(source, bot.id) else None
+                title, performer = texts.sound_names(caption, _known.get(clip.unique_id))
                 name = uuid.uuid4().hex
                 try:
                     sound = await asyncio.to_thread(audio.extract, path, workdir / f"{name}.m4a", title, performer)
@@ -100,17 +101,3 @@ def _reply_to(message: Message) -> ReplyParameters:
 def _filename(title: str, performer: str | None) -> str:
     name = f"{performer} - {title}" if performer else title
     return re.sub(r'[\\/:*?"<>|\n]+', " ", name)[:80].strip() + ".m4a"
-
-
-@contextlib.asynccontextmanager
-async def _errors_in_reply(bot: Bot, chat_id: int, reply: ReplyParameters, failure: str):
-    """Errors of a job on a video go to the chat in reply to it."""
-    try:
-        yield
-        return
-    except UserError as e:
-        text = str(e)
-    except Exception:
-        log.exception(failure)
-        text = failure
-    await bot.send_message(chat_id, f"❌ {text}", reply_parameters=reply)
