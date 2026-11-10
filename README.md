@@ -18,6 +18,8 @@ Shorts from a link.
 - **Video stickers (DM)**: the «🎭 Стикер» button under a video.
 - **Your own videos (DM)**: any video, GIF or round video sent or forwarded to the bot. It replies
   «🎬 Что сделать с этим видео?» ("what to do with this video?") with the same buttons.
+- **Problem reports (DM)**: `/report what happened`, or `/report` in reply to the message with the problem. The
+  owner gets it and can answer.
 
 The bot's buttons and messages are in Russian; `/help` is in both English and Russian.
 
@@ -61,6 +63,11 @@ cut lives in the buttons' callback data; nothing is stored in the database. The 
 Telegram, which gives bots files up to 20 MB, and downloads bigger videos again by the link in the caption. The
 source is kept for ~15 minutes, so moves, round videos, Shazam and audio don't download it again. Under videos
 sent to the bot the buttons sit on the bot's reply and work on the video it replies to.
+
+**Reports**: the owner gets the report with the person's name, @username and a `#u<id>` tag (searching for it
+finds all their reports), followed by copies of the message it's about and of the screenshot, if there is one.
+The owner's reply to a report goes to the person, as text or with any attachment. A bare `/report` asks what
+happened, and the answer to that question becomes the report. One person can send a report every 30 seconds.
 
 Videos are downloaded by [yt-dlp](https://github.com/yt-dlp/yt-dlp) as H.264/MP4 up to 1080p, or in lower quality
 when that doesn't fit the Bot API limit (50 MB). Sent file_ids are cached in SQLite, so a repeated link is
@@ -119,7 +126,7 @@ checks PyPI and restarts when a new version is out.
 | `MIN_FREE_DISK_MB` | `1024` | below this, downloads pause |
 | `CACHE_TTL_DAYS` | `30` | how long file_ids are kept |
 | `STORAGE_CHAT_ID` | — | channel (with the bot as admin) where videos for inline and guest mode are uploaded. Without it they go to the DM of whoever asked, or of the owner, and the message is deleted right away |
-| `OWNER_ID` | the first person to message the bot | who gets notifications and where uploads go as a last resort |
+| `OWNER_ID` | the first person to message the bot | who gets notifications and reports, and where uploads go as a last resort |
 
 After editing `.env`: `docker compose up -d`.
 
@@ -160,10 +167,11 @@ bot/
     stickers.py        a sticker from a video in the chat, personal packs
     sounds.py          Shazam and audio from a video in the chat
     rounds.py          a round video from a video in the chat
+    reports.py         problem reports to the owner and the owner's answers
     keyboards.py       buttons and their callback data
     texts.py           /help and shared texts
     messages.py        reading incoming messages
-    handlers/          routers: stickers → sounds → rounds → chats → inline → fallback
+    handlers/          routers: reports → stickers → sounds → rounds → chats → inline → fallback
 tests/                 unit tests (pytest)
 ```
 

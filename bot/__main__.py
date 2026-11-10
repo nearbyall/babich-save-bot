@@ -15,18 +15,19 @@ from .telegram.handlers import router
 
 log = logging.getLogger("bot")
 
-# language_code: (description of /start in DMs, of /dl in groups); None is everyone else
+# language_code: (descriptions of /start and /report in DMs, of /dl in groups); None is everyone else
 COMMANDS = {
-    None: ("How to use", "Download a video by link"),
-    "ru": ("Как пользоваться", "Скачать видео по ссылке"),
+    None: ("How to use", "Report a problem", "Download a video by link"),
+    "ru": ("Как пользоваться", "Сообщить о проблеме", "Скачать видео по ссылке"),
 }
 
 
 async def setup_commands(bot: Bot) -> None:
     """The bot's description and "about" text are managed by hand in @BotFather."""
     try:
-        for language, (start, dl) in COMMANDS.items():
-            await bot.set_my_commands([BotCommand(command="start", description=start)],
+        for language, (start, report, dl) in COMMANDS.items():
+            await bot.set_my_commands([BotCommand(command="start", description=start),
+                                       BotCommand(command="report", description=report)],
                                       scope=BotCommandScopeAllPrivateChats(), language_code=language)
             await bot.set_my_commands([BotCommand(command="dl", description=dl)],
                                       scope=BotCommandScopeAllGroupChats(), language_code=language)

@@ -7,6 +7,7 @@ from bot.telegram.texts import help_text, sound_names, track_caption
 @pytest.mark.parametrize("feature", [
     "TikTok", "Instagram", "YouTube Shorts", "slideshow", "слайдшоу", "@savebot", "/dl", "Весь пост",
     "Шазам", "Аудио", "⚪ Кружок", "forward", "перешли", "🎭 Стикер", "×0.25–×8", "круг", "стикерпак", "0:12-0:20",
+    "/report",
 ])
 def test_help_lists_every_feature(feature):
     assert feature in help_text("savebot")
