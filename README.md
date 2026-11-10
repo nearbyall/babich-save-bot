@@ -18,8 +18,8 @@ Shorts from a link.
 - **Video stickers (DM)**: the «🎭 Стикер» button under a video.
 - **Your own videos (DM)**: any video, GIF or round video sent or forwarded to the bot. It replies
   «🎬 Что сделать с этим видео?» ("what to do with this video?") with the same buttons.
-- **Problem reports (DM)**: `/report what happened`, or `/report` in reply to the message with the problem. The
-  owner gets it and can answer.
+- **Bugs and ideas (DM)**: `/report text` about what's broken or what to add, or `/report` in reply to the
+  message it's about. The owner gets it and can answer.
 
 The bot's buttons and messages are in Russian; `/help` is in both English and Russian.
 
@@ -64,10 +64,11 @@ Telegram, which gives bots files up to 20 MB, and downloads bigger videos again 
 source is kept for ~15 minutes, so moves, round videos, Shazam and audio don't download it again. Under videos
 sent to the bot the buttons sit on the bot's reply and work on the video it replies to.
 
-**Reports**: the owner gets the report with the person's name, @username and a `#u<id>` tag (searching for it
-finds all their reports), followed by copies of the message it's about and of the screenshot, if there is one.
-The owner's reply to a report goes to the person, as text or with any attachment. A bare `/report` asks what
-happened, and the answer to that question becomes the report. One person can send a report every 30 seconds.
+**Reports** (bugs and suggestions alike): the owner gets the report with the person's name, @username and a
+`#u<id>` tag (searching for it finds all their reports), followed by copies of the message it's about and of the
+screenshot, if there is one. The owner's reply to a report goes to the person, as text or with any attachment. A
+bare `/report` asks what it's about, and the answer to that question becomes the report. One person can send a
+report every 30 seconds.
 
 Videos are downloaded by [yt-dlp](https://github.com/yt-dlp/yt-dlp) as H.264/MP4 up to 1080p, or in lower quality
 when that doesn't fit the Bot API limit (50 MB). Sent file_ids are cached in SQLite, so a repeated link is
@@ -167,7 +168,7 @@ bot/
     stickers.py        a sticker from a video in the chat, personal packs
     sounds.py          Shazam and audio from a video in the chat
     rounds.py          a round video from a video in the chat
-    reports.py         problem reports to the owner and the owner's answers
+    reports.py         bug reports and ideas to the owner, the owner's answers
     keyboards.py       buttons and their callback data
     texts.py           /help and shared texts
     messages.py        reading incoming messages

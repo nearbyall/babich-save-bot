@@ -17,8 +17,8 @@ log = logging.getLogger("bot")
 
 # language_code: (descriptions of /start and /report in DMs, of /dl in groups); None is everyone else
 COMMANDS = {
-    None: ("How to use", "Report a problem", "Download a video by link"),
-    "ru": ("Как пользоваться", "Сообщить о проблеме", "Скачать видео по ссылке"),
+    None: ("How to use", "Report a bug or suggest an idea", "Download a video by link"),
+    "ru": ("Как пользоваться", "Ошибка или предложение", "Скачать видео по ссылке"),
 }
 
 

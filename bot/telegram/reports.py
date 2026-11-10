@@ -10,7 +10,7 @@ from aiogram.types import Message, ReplyParameters, User
 
 log = logging.getLogger(__name__)
 
-MARK = "🆘 Репорт"
+MARK = "📮 Репорт"
 ANSWER = "💬 Ответ на твой репорт:"
 INTERVAL = 30  # seconds between reports of one user
 MAX_TEXT = 3500  # the header with the report has to fit in one message

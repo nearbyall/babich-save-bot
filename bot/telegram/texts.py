@@ -13,7 +13,7 @@ STICKER_BUSY = "Подожди, ещё делаю предыдущий стик�
 NO_TRACK = "🤷 Не узнал трек — похоже, это оригинальный звук или речь."
 VIDEO_ACTIONS = "🎬 Что сделать с этим видео?"
 # Plain text: replies to the prompt are recognized by it
-REPORT_PROMPT = "🆘 Что случилось? Опиши проблему одним сообщением — можно со скриншотом или ссылкой."
+REPORT_PROMPT = "📮 Что не так или что добавить? Напиши одним сообщением — можно со скриншотом или ссылкой."
 
 
 def help_text(username: str) -> str:
@@ -30,8 +30,9 @@ def help_text(username: str) -> str:
         "🎭 Video stickers: tap «🎭 Стикер» under a video. Buttons under the sticker move it, change the speed "
         "(×0.25–×8) and the shape (1:1, 16:9, 9:16, circle), and add it to your own sticker pack. "
         "Reply to the video with <code>0:12</code> or <code>0:12-0:20</code> to cut from that moment.\n"
-        "🆘 Something's broken? <code>/report what happened</code>, or reply <code>/report</code> to the message "
-        "with the problem. The developer gets it and can answer you here.\n\n"
+        "📮 Found a bug or have an idea? <code>/report your text</code>: what's broken or what you'd like added. "
+        "About a particular message, reply <code>/report</code> to it. The developer gets it and can answer you "
+        "here.\n\n"
         "🇷🇺 <b>Видео и фото из TikTok, Instagram и YouTube Shorts</b>\n"
         "📥 Пришли ссылку — пришлю видео, фото-пост, карусель или слайдшоу со звуком.\n"
         f"💬 Любой чат: набери <code>@{username} ссылка</code> и нажми на результат или просто отправь. "
@@ -43,8 +44,8 @@ def help_text(username: str) -> str:
         "🎭 Видеостикеры: «🎭 Стикер» под видео. Кнопки под стикером двигают его, меняют скорость (×0.25–×8) "
         "и форму (1:1, 16:9, 9:16, круг) и добавляют в твой стикерпак. Ответь на видео <code>0:12</code> "
         "или <code>0:12-0:20</code> — вырежу с этого места.\n"
-        "🆘 Что-то сломалось? <code>/report что случилось</code> или ответь <code>/report</code> на сообщение "
-        "с проблемой — разработчик получит и сможет ответить здесь."
+        "📮 Нашёл ошибку или есть идея? <code>/report текст</code> — что сломалось или что добавить. Про "
+        "конкретное сообщение — ответь на него <code>/report</code>. Разработчик получит и сможет ответить здесь."
     )
 
 

@@ -1,4 +1,4 @@
-"""/report in DMs: problems go to the owner, and the owner's answers go back to the user."""
+"""/report in DMs: bugs and ideas go to the owner, and the owner's answers go back to the user."""
 import html
 import logging
 
@@ -46,10 +46,10 @@ async def report_described(message: Message, bot: Bot, db: Database) -> None:
 
 @router.message(Command("report"))
 async def report_command(message: Message, bot: Bot, db: Database, command: CommandObject) -> None:
-    """/report text, or /report in reply to the message with the problem; a bare /report asks what's wrong."""
+    """/report text, or /report in reply to the message it's about; a bare /report asks what it is."""
     about = message.reply_to_message
     if not command.args and not about and message.content_type == ContentType.TEXT:
-        await message.answer(texts.REPORT_PROMPT, reply_markup=ForceReply(input_field_placeholder="Что не так?"))
+        await message.answer(texts.REPORT_PROMPT, reply_markup=ForceReply(input_field_placeholder="Ошибка или идея…"))
         return
     await _report(message, bot, db, command.args or "", about)
 
