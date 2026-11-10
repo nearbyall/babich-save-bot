@@ -29,6 +29,13 @@ def test_prune_drops_old_and_extra_records(tmp_path, monkeypatch):
     assert db.get("old") is None and db.get("new0") is None and db.get("new2")
 
 
+def test_reports_remember_their_sender(tmp_path):
+    db = Database(tmp_path / "db.sqlite3")
+    db.remember_report(10, 42)
+    assert db.reporter(10) == 42
+    assert db.reporter(11) is None
+
+
 def test_first_user_becomes_the_owner(tmp_path):
     db = Database(tmp_path / "db.sqlite3")
     assert db.remember_owner(1) and not db.remember_owner(2)

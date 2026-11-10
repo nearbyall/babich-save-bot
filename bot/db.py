@@ -1,4 +1,4 @@
-"""file_id cache of everything already uploaded to Telegram, and the bot owner."""
+"""file_id cache of everything already uploaded to Telegram, the bot owner and whom reports came from."""
 import json
 import sqlite3
 import time
@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS posts (
     created_at INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS reports (message_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL);
 """
 
 
@@ -115,3 +116,12 @@ class Database:
         with self._db:
             cur = self._db.execute("INSERT OR IGNORE INTO meta VALUES ('owner_id', ?)", (str(user_id),))
         return cur.rowcount > 0
+
+    def remember_report(self, message_id: int, user_id: int) -> None:
+        """The report header `message_id` in the owner's chat came from `user_id`."""
+        with self._db:
+            self._db.execute("INSERT OR REPLACE INTO reports VALUES (?, ?)", (message_id, user_id))
+
+    def reporter(self, message_id: int) -> int | None:
+        row = self._db.execute("SELECT user_id FROM reports WHERE message_id = ?", (message_id,)).fetchone()
+        return row[0] if row else None

@@ -23,7 +23,7 @@ async def answered_report(message: Message, bot: Bot, db: Database) -> dict[str,
     reply = message.reply_to_message
     if not reply or not is_from_bot(reply, bot.id) or message.from_user.id != db.owner_id():
         return False
-    user_id = reports.reporter(reply)
+    user_id = db.reporter(reply.message_id)
     return {"user_id": user_id} if user_id else False
 
 
@@ -68,9 +68,10 @@ async def _send(message: Message, bot: Bot, db: Database, text: str, about: Mess
         log.warning("report from %s dropped: the bot has no owner yet", message.from_user.id)
         return False
     try:
-        await reports.send(bot, owner, message, text, about)
+        header_id = await reports.send(bot, owner, message, text, about)
     except TelegramAPIError:
         log.exception("failed to send a report from %s", message.from_user.id)
         return False
+    db.remember_report(header_id, message.from_user.id)
     log.info("report from %s sent", message.from_user.id)
     return True

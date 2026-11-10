@@ -1,21 +1,13 @@
-import datetime
-
-from aiogram.types import Chat, Message, User
+from aiogram.types import User
 
 from bot.telegram import reports
 
-NOW = datetime.datetime.now()
-
-
-def bot_message(text):
-    return Message(message_id=1, date=NOW, chat=Chat(id=1, type="private"), text=text)
-
 
 def test_header_names_the_reporter_and_escapes_the_text():
-    user = User(id=42, is_bot=False, first_name="Vlad <3", username="vlad", language_code="ru")
+    user = User(id=42, is_bot=False, first_name="Vlad <3", username="vlad", language_code="ru<b>")
     text = reports.header(user, " видео & звук не скачались \n")
     assert text.startswith(f"{reports.MARK} #u42\n")
-    assert '<a href="tg://user?id=42">Vlad &lt;3</a> · @vlad · ru' in text
+    assert '<a href="tg://user?id=42">Vlad &lt;3</a> · @vlad · ru&lt;b&gt;' in text
     assert "<blockquote expandable>видео &amp; звук не скачались</blockquote>" in text
 
 
@@ -27,12 +19,6 @@ def test_header_without_username_or_text():
 
 def test_header_cuts_long_reports():
     assert len(reports.header(User(id=7, is_bot=False, first_name="A"), "x" * 10_000)) < 4096
-
-
-def test_reporter_reads_the_tag_back():
-    assert reports.reporter(bot_message(f"{reports.MARK} #u123456789\n👤 A\nтекст #u1")) == 123456789
-    assert reports.reporter(bot_message("Пришли ссылку #u42")) is None
-    assert reports.reporter(bot_message(None)) is None
 
 
 def test_too_soon_lets_one_report_through_per_interval(monkeypatch):
