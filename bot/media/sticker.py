@@ -114,12 +114,12 @@ def render(source: Path, dest: Path, cut: Cut) -> None:
         )
         if result.returncode:
             log.warning("sticker rendering failed: %s", result.stderr.strip()[-500:])
-            raise UserError("Не получилось сделать стикер из этого видео.")
+            raise UserError("sticker_render_failed")
         frames = re.findall(r"^frame=(\d+)", result.stdout, re.MULTILINE)
         if not frames or frames[-1] == "0":
-            raise UserError("На этом месте в видео уже нет кадров.")
+            raise UserError("no_frames_here")
         size = dest.stat().st_size
         if size <= MAX_SIZE:
             return
         bitrate *= MAX_SIZE * 0.85 / size
-    raise UserError("Тут слишком много движения — не влезает в 256 КБ. Попробуй другой момент.")
+    raise UserError("too_much_motion")

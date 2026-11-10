@@ -92,7 +92,7 @@ async def recognize(video: Path) -> Track | None:
                 if track := await _ask(shazam, _wav(samples, start)):
                     return track
     except TimeoutError as e:
-        raise UserError("Shazam сейчас перегружен — попробуй через минуту.") from e
+        raise UserError("shazam_busy") from e
     return None
 
 
@@ -109,7 +109,7 @@ async def _ask(shazam: Shazam, wav: bytes) -> Track | None:
             return None
         except (aiohttp.ClientError, BadResponseStatus, FailedDecodeJson) as e:
             log.warning("Shazam request failed: %s", e)
-            raise UserError("Shazam не отвечает — попробуй позже.") from e
+            raise UserError("shazam_down") from e
         return parse(answer["track"]) if answer.get("track") else None
 
 

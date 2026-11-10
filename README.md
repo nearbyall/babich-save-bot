@@ -20,8 +20,14 @@ Shorts from a link.
   «🎬 Что сделать с этим видео?» ("what to do with this video?") with the same buttons.
 - **Bugs and ideas (DM)**: `/report text` about what's broken or what to add, or `/report` in reply to the
   message it's about. The owner gets it and can answer.
+- **Language (DM)**: `/lang` switches between Russian, the default, and English.
 
-The bot's buttons and messages are in Russian; `/help` is in both English and Russian.
+**Languages**: the bot speaks Russian to everyone until they pick English with `/lang` (or `/lang en`, `/lang ru`).
+The choice is kept per person and covers buttons, messages, errors and `/help`, and their command menu follows it.
+In groups, inline and guest mode the bot answers in the language of whoever sent the link. Errors are put into
+words when shown, so everyone waiting on one download reads it in their own language. The menu of commands is in
+English for Telegram apps set to English and in Russian for the rest. Reports and server notices reach the owner in
+the owner's language. Button names below are the Russian ones.
 
 **Photo posts** (TikTok slideshows, Instagram photos and carousels) arrive in DMs and groups as albums of up to 10
 (and at most 48 MB per album, the Bot API request limit); slideshows are followed by their sound. In inline and
@@ -147,7 +153,8 @@ bot/
   __main__.py          startup: bot, routers, background tasks
   config.py            settings from .env
   links.py             parsing and normalizing links, deep link payloads
-  db.py                file_id cache (SQLite) and the owner
+  db.py                file_id cache (SQLite), the owner, report senders, users' languages
+  i18n.py              every text in Russian and English, the language of the update being handled
   errors.py            UserError, an error with a message for the user
   jobs.py              requests in progress (a restart waits for them), guard against repeated taps
   housekeeping.py      temp and cache cleanup, disk watch, yt-dlp updates
@@ -170,9 +177,10 @@ bot/
     rounds.py          a round video from a video in the chat
     reports.py         bug reports and ideas to the owner, the owner's answers
     keyboards.py       buttons and their callback data
-    texts.py           /help and shared texts
+    texts.py           texts put together from data: captions, post summaries, sound names
+    languages.py       language middleware, command menus, picking a language
     messages.py        reading incoming messages
-    handlers/          routers: reports → stickers → sounds → rounds → chats → inline → fallback
+    handlers/          routers: languages → reports → stickers → sounds → rounds → chats → inline → fallback
 tests/                 unit tests (pytest)
 ```
 
@@ -182,5 +190,7 @@ tests/                 unit tests (pytest)
 ./test.sh                        # pyflakes + pytest inside the bot image (it has ffmpeg)
 ```
 
-History is kept in git, one commit per change. A new feature also goes into `/help` (`bot/telegram/texts.py`),
-and `tests/test_texts.py` checks that every feature is mentioned there.
+History is kept in git, one commit per change. Every text the user sees goes into `bot/i18n.py` in both
+languages, and a new feature also goes into `/help` there (`HELP_RU`, `HELP_EN`). `tests/test_texts.py` checks that
+every feature is mentioned in both, and `tests/test_i18n.py` that every text has both versions with the same
+placeholders, every key used exists and no Russian is left outside the catalog.

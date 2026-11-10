@@ -103,14 +103,13 @@ async def _fetch(bot: Bot, message: Message, clip: Clip, user_id: int, path: Pat
             log.info("can't fetch %s from Telegram: %s", clip.unique_id, e)
     links = find_links(text_of(message))
     if not links:
-        raise UserError("Видео больше 20 МБ — такие бот не может забрать из Telegram. "
-                        "Пришли ссылку на него или файл поменьше.")
+        raise UserError("too_big_to_fetch")
     media = await download(links[0], user_id)
     try:
         if isinstance(media, Album):
             video = next((item.path for item in media.items if item.kind == "video"), None)
             if video is None:
-                raise UserError("В этом посте нет видео.")
+                raise UserError("no_video_in_post")
         else:
             video = media.clip.path
         shutil.move(video, path)

@@ -35,9 +35,9 @@ class _Backlog:
     @contextlib.contextmanager
     def slot(self, user_id: int):
         if self._jobs.total() >= self._total:
-            raise UserError("Сейчас слишком много запросов, попробуй через минуту.")
+            raise UserError("too_many_requests")
         if self._jobs[user_id] >= self._per_user:
-            raise UserError("Подожди, пока скачаются предыдущие видео.")
+            raise UserError("wait_previous")
         self._jobs[user_id] += 1
         try:
             yield
@@ -120,10 +120,10 @@ def _extract(ydl: yt_dlp.YoutubeDL, link: Link, workdir: Path, deadline: float) 
         video_id = str(info.get("id") or tiktok_id)
         if album := posts.tiktok_slideshow(ydl, link, video_id, workdir, deadline):
             return album
-        raise UserError("В этом посте нет видео.")
+        raise UserError("no_video_in_post")
     entries = ytdlp.entries(info)
     if not entries:
-        raise UserError("В этом посте нет видео.")
+        raise UserError("no_video_in_post")
     if link.platform == "Instagram" and (len(entries) > 1 or not ytdlp.has_video(entries[0])):
         return posts.instagram_post(ydl, link, info, entries, workdir, deadline)
 

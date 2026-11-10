@@ -20,7 +20,7 @@ _TIKTOK_HEADERS = {"Referer": "https://www.tiktok.com/"}
 
 def _check_deadline(deadline: float) -> None:
     if time.monotonic() > deadline:
-        raise UserError("Пост качается слишком долго, попробуй позже.")
+        raise UserError("post_too_slow")
 
 
 def instagram_post(ydl: yt_dlp.YoutubeDL, link: Link, info: dict, entries: list[dict],
@@ -42,7 +42,7 @@ def instagram_post(ydl: yt_dlp.YoutubeDL, link: Link, info: dict, entries: list[
                 raise
             log.info("skipping item %d of %s: %s", i, link.url, e)
     if not items:
-        raise UserError("Не получилось скачать ни одного фото или видео из поста.")
+        raise UserError("post_empty")
     return Album(items=items, workdir=workdir, uploader=ytdlp.uploader(info), keys=ytdlp.cache_keys(link, info))
 
 

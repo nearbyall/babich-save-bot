@@ -5,11 +5,13 @@ from bot.media.shazam import Track
 from bot.media.sticker import Cut, Shape
 from bot.telegram.keyboards import (
     CutButton,
+    LangButton,
     RoundButton,
     SoundButton,
     TrackButton,
     is_kept,
     kept_keyboard,
+    lang_keyboard,
     post_keyboard,
     round_keyboard,
     sticker_keyboard,
@@ -44,6 +46,27 @@ def test_video_keyboard():
     assert TrackButton.unpack(shazam.callback_data) and SoundButton.unpack(sound.callback_data)
     assert CutButton.unpack(sticker.callback_data).cut() == Cut()
     assert RoundButton.unpack(round_video.callback_data).start == 0
+
+
+def test_keyboards_in_english(english):
+    assert _labels(video_keyboard(sound=True)) == [["🎵 Shazam", "🎧 Audio"], ["🎭 Sticker", "⚪ Round video"]]
+    assert _labels(sticker_keyboard(Cut(0, 3, 1, Shape.ORIGINAL), 20, 1080, 1920)) == [
+        ["1s ▶️", "3s ⏩"],
+        ["🐢 ×0.5", "🐇 ×2"],
+        ["✓ Orig", "1:1", "16:9", "⚪ Circle"],
+        ["➕ Add to my pack · 0:00–0:03"],
+    ]
+    photo = CachedFile("f", "photo", None, None, None, None)
+    video = CachedFile("v", "video", None, None, None, None)
+    assert post_keyboard("bot", CachedPost("tt:1", [photo, photo, video], "a", None)).inline_keyboard[0][0].text == (
+        "🖼 Whole post: 2 photos and 1 video + sound")
+    assert post_keyboard("bot", CachedPost("tt:1", [photo, video, video], None, None)).inline_keyboard[0][0].text == (
+        "🖼 Whole post: 1 photo and 2 videos")
+
+
+def test_lang_keyboard_marks_the_current_language():
+    assert _labels(lang_keyboard("en")) == [["🇷🇺 Русский", "✓ 🇬🇧 English"]]
+    assert LangButton.unpack(lang_keyboard("ru").inline_keyboard[0][1].callback_data).lang == "en"
 
 
 def test_silent_and_round_videos_get_fewer_buttons():

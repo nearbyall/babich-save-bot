@@ -13,6 +13,7 @@ from aiogram.utils.chat_action import ChatActionSender
 
 from .. import jobs
 from ..errors import UserError
+from ..i18n import t
 from ..media import ffmpeg, sticker
 from ..media.sticker import Cut
 from . import clips
@@ -36,7 +37,7 @@ async def make(bot: Bot, source: Message, user: User, cut: Cut) -> Message | Non
     reply = ReplyParameters(message_id=source.message_id, allow_sending_without_reply=True)
     clip = clip_of(source)
     if clip is None:
-        await bot.send_message(user.id, "❌ Не вижу видео — пришли его заново.", reply_parameters=reply)
+        await bot.send_message(user.id, f"❌ {t('video_missing')}", reply_parameters=reply)
         return None
     try:
         with jobs.tracked(), _busy.hold(user.id), clips.workdir(clip) as workdir:
@@ -46,10 +47,10 @@ async def make(bot: Bot, source: Message, user: User, cut: Cut) -> Message | Non
         text = str(e)
     except TelegramAPIError:
         log.exception("failed to send sticker from %s", clip.unique_id)
-        text = "Telegram не принял стикер. Попробуй другой момент."
+        text = t("sticker_rejected")
     except Exception:
         log.exception("failed to make sticker from %s", clip.unique_id)
-        text = "Не получилось сделать стикер."
+        text = t("sticker_failed")
     await bot.send_message(user.id, f"❌ {text}", reply_parameters=reply)
     return None
 
@@ -62,7 +63,7 @@ async def _render_and_send(bot: Bot, source: Message, user: User, clip: Clip, cu
         streams = await asyncio.to_thread(ffmpeg.probe, path)
         width, height, duration = streams.width, streams.height, streams.duration
     if duration and cut.start >= duration:
-        raise UserError(f"В видео всего {sticker.format_time(duration)}.")
+        raise UserError("video_only", duration=sticker.format_time(duration))
     cut = cut.framed(round_video=clip.round)
     dest = workdir / f"{uuid.uuid4().hex}.webm"
     try:

@@ -11,6 +11,7 @@ from aiogram.types import FSInputFile, LinkPreviewOptions, Message, ReplyParamet
 from aiogram.utils.chat_action import ChatActionSender
 
 from .. import jobs
+from ..i18n import t
 from ..media import audio, ffmpeg, shazam
 from ..media.shazam import Track
 from . import clips, texts
@@ -34,7 +35,7 @@ def busy(user_id: int) -> bool:
 async def identify(bot: Bot, source: Message, clip: Clip, user: User) -> None:
     """Reply to the video with the track playing in it."""
     reply = _reply_to(source)
-    async with clips.errors_in_reply(bot, user.id, reply, "Не получилось распознать трек."):
+    async with clips.errors_in_reply(bot, user.id, reply, t("track_failed")):
         with jobs.tracked(), _listening.hold(user.id):
             track = await _recognize(bot, source, clip, user.id)
             await _send_track(bot, user.id, track, reply)
@@ -43,7 +44,7 @@ async def identify(bot: Bot, source: Message, clip: Clip, user: User) -> None:
 async def send_sound(bot: Bot, source: Message, clip: Clip, user: User) -> None:
     """Reply to the video with its sound as an audio file."""
     reply = _reply_to(source)
-    async with clips.errors_in_reply(bot, user.id, reply, "Не получилось достать звук."):
+    async with clips.errors_in_reply(bot, user.id, reply, t("sound_failed")):
         with jobs.tracked(), _extracting.hold(user.id), clips.workdir(clip) as workdir:
             async with ChatActionSender.upload_voice(bot=bot, chat_id=user.id):
                 path = await clips.fetch(bot, source, clip, user.id, workdir)
@@ -81,7 +82,7 @@ async def _recognize(bot: Bot, source: Message, clip: Clip, user_id: int) -> Tra
 
 async def _send_track(bot: Bot, chat_id: int, track: Track | None, reply: ReplyParameters) -> None:
     if track is None:
-        await bot.send_message(chat_id, texts.NO_TRACK, reply_parameters=reply)
+        await bot.send_message(chat_id, t("no_track"), reply_parameters=reply)
         return
     caption, markup = texts.track_caption(track), track_keyboard(track)
     if track.cover:

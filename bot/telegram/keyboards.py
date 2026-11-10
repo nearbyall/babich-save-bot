@@ -5,6 +5,7 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from ..db import CachedPost
+from ..i18n import LANGS, NAMES, Lang, t
 from ..links import to_payload
 from ..media import rounds
 from ..media.shazam import Track
@@ -53,13 +54,13 @@ class CurrentButton(CallbackData, prefix="stn"):
     """The option already applied to the sticker."""
 
 
-_SHAPE_LABELS = {Shape.ORIGINAL: "Ориг", Shape.SQUARE: "1:1", Shape.WIDE: "16:9", Shape.TALL: "9:16",
-                 Shape.ROUND: "⚪ Круг"}
+class LangButton(CallbackData, prefix="lang"):
+    lang: str
 
 
 def placeholder_keyboard(placeholder: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="🔄 Обновить", callback_data=LoadButton(placeholder=placeholder).pack())]])
+        InlineKeyboardButton(text=t("refresh"), callback_data=LoadButton(placeholder=placeholder).pack())]])
 
 
 def post_keyboard(username: str, post: CachedPost) -> InlineKeyboardMarkup | None:
@@ -68,18 +69,18 @@ def post_keyboard(username: str, post: CachedPost) -> InlineKeyboardMarkup | Non
     if not payload or (len(post.items) < 2 and not post.audio):
         return None
     return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(
-        text=f"🖼 Весь пост: {post_summary(post)}", url=f"https://t.me/{username}?start={payload}")]])
+        text=t("whole_post", summary=post_summary(post)), url=f"https://t.me/{username}?start={payload}")]])
 
 
 def video_keyboard(sound: bool, round_video: bool = False) -> InlineKeyboardMarkup:
     """Under a single video in DMs. Silent ones get no Shazam and audio, round ones no round button."""
     rows = []
     if sound:
-        rows.append([InlineKeyboardButton(text="🎵 Шазам", callback_data=TrackButton().pack()),
-                     InlineKeyboardButton(text="🎧 Аудио", callback_data=SoundButton().pack())])
-    rows.append([InlineKeyboardButton(text="🎭 Стикер", callback_data=CutButton.of(Cut()).pack())])
+        rows.append([InlineKeyboardButton(text=t("btn_shazam"), callback_data=TrackButton().pack()),
+                     InlineKeyboardButton(text=t("btn_audio"), callback_data=SoundButton().pack())])
+    rows.append([InlineKeyboardButton(text=t("btn_sticker"), callback_data=CutButton.of(Cut()).pack())])
     if not round_video:
-        rows[-1].append(InlineKeyboardButton(text="⚪ Кружок", callback_data=RoundButton().pack()))
+        rows[-1].append(InlineKeyboardButton(text=t("btn_round"), callback_data=RoundButton().pack()))
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
@@ -128,7 +129,7 @@ def _move_row(cut: Cut, duration: int | None) -> list[InlineKeyboardButton]:
     buttons = []
     for start, step in sorted(moves.items()):
         arrow = ("⏪" if step < 0 else "⏩") if abs(step) == big else ("◀️" if step < 0 else "▶️")
-        label = f"{arrow} {-step:g}с" if step < 0 else f"{step:g}с {arrow}"
+        label = f"{arrow} {t('seconds', n=-step)}" if step < 0 else f"{t('seconds', n=step)} {arrow}"
         buttons.append(_button(label, replace(cut, start=start)))
     return buttons
 
@@ -142,9 +143,14 @@ def _speed_row(cut: Cut) -> list[InlineKeyboardButton]:
     return buttons
 
 
+def _shape_labels() -> dict[Shape, str]:
+    return {Shape.ORIGINAL: t("shape_original"), Shape.SQUARE: "1:1", Shape.WIDE: "16:9", Shape.TALL: "9:16",
+            Shape.ROUND: t("shape_round")}
+
+
 def _shape_row(cut: Cut, width: int | None, height: int | None) -> list[InlineKeyboardButton]:
     buttons = []
-    for shape, label in _SHAPE_LABELS.items():
+    for shape, label in _shape_labels().items():
         frame = shape.frame
         if shape != Shape.ROUND and frame and width and height and abs(width / height - frame[0] / frame[1]) < 0.03:
             continue  # same as the original
@@ -156,7 +162,7 @@ def _shape_row(cut: Cut, width: int | None, height: int | None) -> list[InlineKe
 
 
 def sticker_keyboard(cut: Cut, duration: int | None, width: int | None, height: int | None) -> InlineKeyboardMarkup:
-    keep = InlineKeyboardButton(text=f"➕ В мой пак · {describe(cut, duration)}", callback_data=KeepButton().pack())
+    keep = InlineKeyboardButton(text=t("keep", cut=describe(cut, duration)), callback_data=KeepButton().pack())
     rows = [_move_row(cut, duration), _speed_row(cut), _shape_row(cut, width, height), [keep]]
     return InlineKeyboardMarkup(inline_keyboard=[row for row in rows if row])
 
@@ -164,9 +170,15 @@ def sticker_keyboard(cut: Cut, duration: int | None, width: int | None, height: 
 def kept_keyboard(markup: InlineKeyboardMarkup | None, pack: str) -> InlineKeyboardMarkup:
     """The sticker's keyboard with the "add to pack" button turned into a link to the pack."""
     rows = markup.inline_keyboard[:-1] if markup else []
-    opened = InlineKeyboardButton(text="✅ В паке — открыть", url=f"https://t.me/addstickers/{pack}")
+    opened = InlineKeyboardButton(text=t("kept"), url=f"https://t.me/addstickers/{pack}")
     return InlineKeyboardMarkup(inline_keyboard=[*rows, [opened]])
 
 
 def is_kept(markup: InlineKeyboardMarkup | None) -> bool:
     return bool(markup and any(button.url for row in markup.inline_keyboard for button in row))
+
+
+def lang_keyboard(current: Lang) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text=f"✓ {NAMES[lang]}" if lang == current else NAMES[lang],
+                             callback_data=LangButton(lang=lang).pack()) for lang in LANGS]])

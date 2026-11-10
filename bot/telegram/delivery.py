@@ -205,12 +205,12 @@ async def _fetch(bot: Bot, db: Database, link: Link, user_id: int) -> Cached:
                                  [config.STORAGE_CHAT_ID, user_id, db.owner_id()])
         except TelegramAPIError as e:
             log.exception("failed to upload %s", link.url)
-            raise UserError("Telegram не принял файл. Попробуй ещё раз.") from e
+            raise UserError("file_rejected") from e
         finally:
             media.cleanup()
     if not cached:
         me = await bot.me()
-        raise UserError(f"Сначала открой @{me.username} в личке и нажми «Старт», потом повтори.")
+        raise UserError("open_dm_first", username=me.username)
     db.put(media.keys, cached)
     return cached
 

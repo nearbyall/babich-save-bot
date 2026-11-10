@@ -11,6 +11,7 @@ from aiogram.utils.chat_action import ChatActionSender
 from ... import config, jobs
 from ...db import Cached, CachedFile, Database
 from ...errors import UserError
+from ...i18n import t
 from ...links import Link, from_payload
 from ...media.downloader import download
 from ...media.models import Download, Video
@@ -60,7 +61,7 @@ async def _download_and_send(message: Message, link: Link, db: Database) -> None
             return
         except Exception:
             log.exception("unexpected error downloading %s", link.url)
-            await message.reply(f"❌ {texts.FAILED}")
+            await message.reply(f"❌ {t('download_failed')}")
             return
         try:
             _, cached = await upload(message.bot, message.chat.id, media, texts.caption(link, media.uploader),
@@ -68,7 +69,7 @@ async def _download_and_send(message: Message, link: Link, db: Database) -> None
                                      reply_parameters=message.as_reply_parameters(allow_sending_without_reply=True))
         except TelegramAPIError:
             log.exception("failed to upload %s", link.url)
-            await message.reply("❌ Telegram не принял файл. Попробуй ещё раз.")
+            await message.reply(f"❌ {t('file_rejected')}")
             return
         finally:
             media.cleanup()
@@ -102,7 +103,7 @@ async def start(message: Message, bot: Bot, db: Database, command: CommandObject
 @router.message(Command("dl", "save", "download"))
 async def download_command(message: Message, bot: Bot, db: Database) -> None:
     if not (links := links_from(message, bot.id)):
-        await message.reply(f"{texts.NO_LINKS}\n<code>/dl https://vm.tiktok.com/…</code>")
+        await message.reply(f"{t('no_links')}\n<code>/dl https://vm.tiktok.com/…</code>")
         return
     await handle_links(message, links, db)
 
@@ -112,14 +113,14 @@ async def download_command(message: Message, bot: Bot, db: Database) -> None:
 async def video_sent(message: Message) -> None:
     """A video, GIF or round video sent or forwarded to the bot gets the buttons downloaded videos have."""
     markup = video_keyboard(sound=message.animation is None, round_video=message.video_note is not None)
-    await message.reply(texts.VIDEO_ACTIONS, reply_markup=markup)
+    await message.reply(t("video_actions"), reply_markup=markup)
 
 
 @router.message(F.chat.type == ChatType.PRIVATE)
 async def private_message(message: Message, bot: Bot, db: Database) -> None:
     _remember_owner(message, db)
     if not (links := links_from(message, bot.id)):
-        await message.reply(texts.NO_LINKS)
+        await message.reply(t("no_links"))
         return
     await handle_links(message, links, db)
 
@@ -134,4 +135,4 @@ async def group_message(message: Message, bot: Bot, db: Database) -> None:
     if links := links_from(message, me.id):
         await handle_links(message, links, db)
     elif mentioned:
-        await message.reply(texts.NO_LINKS)
+        await message.reply(t("no_links"))

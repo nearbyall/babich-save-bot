@@ -58,7 +58,7 @@ def ensure_free_space() -> None:
     cleanup_stale(max_age=0)
     if free_disk() < config.MIN_FREE_DISK:
         log.warning("only %d MB free on disk, refusing new jobs", free_disk() // config.MB)
-        raise UserError("На сервере заканчивается место, загрузки временно приостановлены.")
+        raise UserError("disk_full")
 
 
 def cleanup_stale(max_age: float = config.STALE_TMP_AGE) -> int:

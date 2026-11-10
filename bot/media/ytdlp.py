@@ -39,22 +39,22 @@ class _Logger:
 def user_error(err: Exception) -> UserError:
     text = str(err).lower()
     if any(s in text for s in ("ip address is blocked", "your country", "your location")):
-        return UserError("Платформа не отдаёт это видео в регион сервера.")
+        return UserError("geo_blocked")
     if "not a bot" in text:
-        return UserError("YouTube временно ограничил доступ серверу. Попробуй позже.")
+        return UserError("youtube_blocked")
     if any(s in text for s in ("login", "private", "rate-limit", "cookies", "sign in")):
-        return UserError("Видео недоступно без входа в аккаунт (приватное или с ограничениями).")
+        return UserError("login_required")
     if "no video" in text:
-        return UserError("В этом посте нет видео.")
+        return UserError("no_video_in_post")
     if "unsupported url" in text:
-        return UserError("Не удалось распознать ссылку как видео.")
+        return UserError("unsupported_link")
     if any(s in text for s in ("unavailable", "not exist", "removed", "deleted", "404", "not found")):
-        return UserError("Видео удалено или недоступно.")
-    return UserError("Не удалось скачать видео. Попробуй ещё раз чуть позже.")
+        return UserError("video_unavailable")
+    return UserError("download_failed")
 
 
 def _too_long() -> UserError:
-    return UserError(f"Видео длиннее {config.MAX_DURATION // 60} мин — такие не качаю.")
+    return UserError("too_long", minutes=config.MAX_DURATION // 60)
 
 
 def _skip_long(info: dict, *, incomplete: bool) -> str | None:
@@ -142,7 +142,7 @@ def fetch_video(ydl: yt_dlp.YoutubeDL, entry: dict) -> tuple[MediaItem, dict]:
         try:
             info = ydl.process_ie_result(copy.deepcopy(entry), download=True)
         except yt_dlp.utils.DownloadCancelled as e:
-            raise UserError("Видео качается слишком долго, попробуй позже.") from e
+            raise UserError("download_too_slow") from e
         except yt_dlp.utils.DownloadError as e:
             log.info("download failed for %s: %s", entry.get("webpage_url"), e)
             raise user_error(e) from e
@@ -155,7 +155,7 @@ def fetch_video(ydl: yt_dlp.YoutubeDL, entry: dict) -> tuple[MediaItem, dict]:
         for f in files:
             f.unlink(missing_ok=True)
         log.info("%s too big at %sp, retrying lower", entry.get("webpage_url"), resolution)
-    raise UserError("Видео больше 50 МБ — Telegram не даст боту его отправить.")
+    raise UserError("too_big")
 
 
 def _clip(path: Path, info: dict) -> MediaItem:

@@ -12,6 +12,7 @@ from aiogram.utils.chat_action import ChatActionSender
 
 from .. import jobs
 from ..errors import UserError
+from ..i18n import t
 from ..media import ffmpeg, rounds
 from ..media.sticker import format_time
 from . import clips
@@ -30,7 +31,7 @@ def busy(user_id: int) -> bool:
 async def make(bot: Bot, source: Message, clip: Clip, user: User, start: int) -> None:
     """Reply to the video with a minute of it from `start` as a round video."""
     reply = ReplyParameters(message_id=source.message_id, allow_sending_without_reply=True)
-    async with clips.errors_in_reply(bot, user.id, reply, "Не получилось сделать кружок."):
+    async with clips.errors_in_reply(bot, user.id, reply, t("round_failed")):
         with jobs.tracked(), _busy.hold(user.id), clips.workdir(clip) as workdir:
             async with ChatActionSender.record_video_note(bot=bot, chat_id=user.id):
                 await _render_and_send(bot, source, clip, user.id, start, workdir, reply)
@@ -41,7 +42,7 @@ async def _render_and_send(bot: Bot, source: Message, clip: Clip, user_id: int, 
     path = await clips.fetch(bot, source, clip, user_id, workdir)
     duration = clip.duration or (await asyncio.to_thread(ffmpeg.probe, path)).duration
     if duration and start >= duration:
-        raise UserError(f"В видео всего {format_time(duration)}.")
+        raise UserError("video_only", duration=format_time(duration))
     dest = workdir / f"{uuid.uuid4().hex}.mp4"
     try:
         started = time.monotonic()
@@ -55,7 +56,6 @@ async def _render_and_send(bot: Bot, source: Message, clip: Clip, user_id: int, 
     except TelegramBadRequest as e:
         if "VOICE_MESSAGES_FORBIDDEN" not in e.message:
             raise
-        raise UserError("Кружки закрыты в настройках конфиденциальности Telegram (Голосовые сообщения). "
-                        "Разреши их и нажми ещё раз.") from e
+        raise UserError("rounds_forbidden") from e
     finally:
         dest.unlink(missing_ok=True)

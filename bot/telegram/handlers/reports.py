@@ -9,7 +9,8 @@ from aiogram.filters import Command, CommandObject
 from aiogram.types import ForceReply, Message
 
 from ...db import Database
-from .. import reports, texts
+from ...i18n import t, variants
+from .. import reports
 from ..messages import is_from_bot
 
 log = logging.getLogger(__name__)
@@ -28,18 +29,19 @@ async def answered_report(message: Message, bot: Bot, db: Database) -> dict[str,
 
 
 @router.message(answered_report)
-async def answer_written(message: Message, bot: Bot, user_id: int) -> None:
+async def answer_written(message: Message, bot: Bot, db: Database, user_id: int) -> None:
     try:
-        await reports.answer(bot, user_id, message)
+        await reports.answer(bot, user_id, db.lang(user_id), message)
     except TelegramForbiddenError:
-        await message.reply("❌ Не доставил: пользователь заблокировал бота.")
+        await message.reply(t("answer_blocked"))
     except TelegramBadRequest as e:
-        await message.reply(f"❌ Не доставил: {html.escape(e.message)}")
+        await message.reply(t("answer_failed", error=html.escape(e.message)))
     else:
-        await message.reply("✅ Отправил.")
+        await message.reply(t("answer_sent"))
 
 
-@router.message(F.reply_to_message.text == texts.REPORT_PROMPT)
+# A reply to the prompt, in whichever language it was asked
+@router.message(F.reply_to_message.text.in_(variants("report_prompt")))
 async def report_described(message: Message, bot: Bot, db: Database) -> None:
     await _report(message, bot, db, message.text or message.caption or "", about=None)
 
@@ -49,18 +51,19 @@ async def report_command(message: Message, bot: Bot, db: Database, command: Comm
     """/report text, or /report in reply to the message it's about; a bare /report asks what it is."""
     about = message.reply_to_message
     if not command.args and not about and message.content_type == ContentType.TEXT:
-        await message.answer(texts.REPORT_PROMPT, reply_markup=ForceReply(input_field_placeholder="Ошибка или идея…"))
+        await message.answer(t("report_prompt"),
+                             reply_markup=ForceReply(input_field_placeholder=t("report_placeholder")))
         return
     await _report(message, bot, db, command.args or "", about)
 
 
 async def _report(message: Message, bot: Bot, db: Database, text: str, about: Message | None) -> None:
     if reports.too_soon(message.from_user.id):
-        await message.reply("Подожди немного перед следующим репортом.")
+        await message.reply(t("report_wait"))
     elif await _send(message, bot, db, text, about):
-        await message.reply("✅ Передал разработчику, спасибо! Ответ, если будет, придёт сюда.")
+        await message.reply(t("report_sent"))
     else:
-        await message.reply("❌ Не получилось отправить репорт. Попробуй ещё раз чуть позже.")
+        await message.reply(t("report_failed"))
 
 
 async def _send(message: Message, bot: Bot, db: Database, text: str, about: Message | None) -> bool:
@@ -68,7 +71,7 @@ async def _send(message: Message, bot: Bot, db: Database, text: str, about: Mess
         log.warning("report from %s dropped: the bot has no owner yet", message.from_user.id)
         return False
     try:
-        header_id = await reports.send(bot, owner, message, text, about)
+        header_id = await reports.send(bot, owner, db.lang(owner), message, text, about)
     except TelegramAPIError:
         log.exception("failed to send a report from %s", message.from_user.id)
         return False

@@ -1,52 +1,15 @@
+"""Texts put together from data; the words come from i18n."""
 import html
 
 from ..db import CachedPost
+from ..i18n import t
 from ..links import Link
 from ..media.shazam import Track
 
-NO_LINKS = (
-    "Send me a TikTok, Instagram or YouTube Shorts link.\n"
-    "Пришли ссылку на TikTok, Instagram или YouTube Shorts."
-)
-FAILED = "Не удалось скачать видео. Попробуй ещё раз чуть позже."
-STICKER_BUSY = "Подожди, ещё делаю предыдущий стикер."
-NO_TRACK = "🤷 Не узнал трек — похоже, это оригинальный звук или речь."
-VIDEO_ACTIONS = "🎬 Что сделать с этим видео?"
-# Plain text: replies to the prompt are recognized by it
-REPORT_PROMPT = "📮 Что не так или что добавить? Напиши одним сообщением — можно со скриншотом или ссылкой."
-
 
 def help_text(username: str) -> str:
-    """Every feature of the bot, in English and Russian. Update it with each new feature."""
-    return (
-        "🇬🇧 <b>Videos and photos from TikTok, Instagram and YouTube Shorts</b>\n"
-        "📥 Send me a link — I'll send back the video, photo post, carousel or slideshow with its sound.\n"
-        f"💬 Any chat: type <code>@{username} link</code> and tap the result, or just send it. "
-        "Photo posts show the first photo and a button for the whole post.\n"
-        "👥 Groups I'm in: <code>/dl link</code>, or reply <code>/dl</code> to a message with a link.\n"
-        "🎬 Under a video in our chat: «🎵 Шазам» finds out what track is playing, "
-        "«🎧 Аудио» sends its sound as an audio file, «⚪ Кружок» makes a round video of it, a minute at a time. "
-        "Send or forward me any video, GIF or round video to get these buttons under it too.\n"
-        "🎭 Video stickers: tap «🎭 Стикер» under a video. Buttons under the sticker move it, change the speed "
-        "(×0.25–×8) and the shape (1:1, 16:9, 9:16, circle), and add it to your own sticker pack. "
-        "Reply to the video with <code>0:12</code> or <code>0:12-0:20</code> to cut from that moment.\n"
-        "📮 Found a bug or have an idea? <code>/report your text</code>: what's broken or what you'd like added. "
-        "About a particular message, reply <code>/report</code> to it. The developer gets it and can answer you "
-        "here.\n\n"
-        "🇷🇺 <b>Видео и фото из TikTok, Instagram и YouTube Shorts</b>\n"
-        "📥 Пришли ссылку — пришлю видео, фото-пост, карусель или слайдшоу со звуком.\n"
-        f"💬 Любой чат: набери <code>@{username} ссылка</code> и нажми на результат или просто отправь. "
-        "У фото-постов — первое фото и кнопка «Весь пост».\n"
-        "👥 Группы, где я есть: <code>/dl ссылка</code> или ответь <code>/dl</code> на сообщение со ссылкой.\n"
-        "🎬 Под видео в личке: «🎵 Шазам» — узнать, что за трек, «🎧 Аудио» — звук отдельным файлом, "
-        "«⚪ Кружок» — видеосообщение, по минуте. Пришли или перешли мне любое видео, GIF или кружок — "
-        "под ним будут те же кнопки.\n"
-        "🎭 Видеостикеры: «🎭 Стикер» под видео. Кнопки под стикером двигают его, меняют скорость (×0.25–×8) "
-        "и форму (1:1, 16:9, 9:16, круг) и добавляют в твой стикерпак. Ответь на видео <code>0:12</code> "
-        "или <code>0:12-0:20</code> — вырежу с этого места.\n"
-        "📮 Нашёл ошибку или есть идея? <code>/report текст</code> — что сломалось или что добавить. Про "
-        "конкретное сообщение — ответь на него <code>/report</code>. Разработчик получит и сможет ответить здесь."
-    )
+    """Every feature of the bot (i18n's HELP_RU and HELP_EN). Update it with each new feature."""
+    return t("help", username=username)
 
 
 def caption(link: Link, uploader: str | None) -> str:
@@ -57,15 +20,15 @@ def caption(link: Link, uploader: str | None) -> str:
 
 
 def loading(link: Link) -> str:
-    return f"⏳ Скачиваю из {link.platform}…"
+    return t("loading", platform=link.platform)
 
 
 def post_summary(post: CachedPost) -> str:
     photos = sum(item.kind == "photo" for item in post.items)
-    parts = [f"{photos} фото"] if photos else []
+    parts = [t("photo" if photos == 1 else "photos", n=photos)] if photos else []
     if videos := len(post.items) - photos:
-        parts.append(f"{videos} видео")
-    return " и ".join(parts) + (" + звук" if post.audio else "")
+        parts.append(t("video" if videos == 1 else "videos", n=videos))
+    return t("and").join(parts) + (t("with_sound") if post.audio else "")
 
 
 def track_caption(track: Track) -> str:
@@ -80,4 +43,4 @@ def sound_names(video_caption: str | None, track: Track | None) -> tuple[str, st
     if track:
         return track.title, track.artist
     platform, _, uploader = (video_caption or "").partition(" · ")
-    return f"Звук из {platform or 'видео'}", uploader or None
+    return (t("sound_from", source=platform) if platform else t("sound_from_video")), uploader or None

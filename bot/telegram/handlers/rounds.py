@@ -2,6 +2,7 @@
 from aiogram import Bot, Router
 from aiogram.types import CallbackQuery, Message
 
+from ...i18n import t
 from ...media.rounds import LENGTH
 from .. import rounds
 from ..clips import clip_of, video_message
@@ -19,13 +20,13 @@ async def round_pressed(callback: CallbackQuery, callback_data: RoundButton, bot
         source = message.reply_to_message if message.video_note else video_message(message)
     clip = clip_of(source)
     if clip is None:
-        await callback.answer("Видео не найдено — пришли его заново.", show_alert=True)
+        await callback.answer(t("video_gone"), show_alert=True)
         return
     if rounds.busy(callback.from_user.id):
-        await callback.answer("Секунду, ещё делаю прошлый кружок…")
+        await callback.answer(t("rounds_busy"))
         return
     if not callback_data.start and (clip.duration or 0) > LENGTH:
-        await callback.answer("⚪ Делаю кружок из первой минуты, под ним будут кнопки следующих.")
+        await callback.answer(t("round_first_minute"))
     else:
-        await callback.answer("⚪ Делаю кружок…")
+        await callback.answer(t("round_making"))
     await rounds.make(bot, source, clip, callback.from_user, callback_data.start)

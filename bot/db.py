@@ -1,4 +1,5 @@
-"""file_id cache of everything already uploaded to Telegram, the bot owner and whom reports came from."""
+"""file_id cache of everything already uploaded to Telegram, the bot owner, whom reports came from and the
+languages users picked."""
 import json
 import sqlite3
 import time
@@ -6,7 +7,8 @@ from dataclasses import asdict, astuple, dataclass
 from pathlib import Path
 from typing import Literal
 
-from . import config
+from . import config, i18n
+from .i18n import Lang
 
 
 @dataclass
@@ -49,6 +51,7 @@ CREATE TABLE IF NOT EXISTS posts (
 );
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS reports (message_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, lang TEXT NOT NULL);
 """
 
 
@@ -125,3 +128,11 @@ class Database:
     def reporter(self, message_id: int) -> int | None:
         row = self._db.execute("SELECT user_id FROM reports WHERE message_id = ?", (message_id,)).fetchone()
         return row[0] if row else None
+
+    def lang(self, user_id: int) -> Lang:
+        row = self._db.execute("SELECT lang FROM users WHERE id = ?", (user_id,)).fetchone()
+        return row[0] if row and row[0] in i18n.LANGS else i18n.DEFAULT
+
+    def set_lang(self, user_id: int, lang: Lang) -> None:
+        with self._db:
+            self._db.execute("INSERT OR REPLACE INTO users VALUES (?, ?)", (user_id, lang))

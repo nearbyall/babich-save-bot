@@ -26,8 +26,8 @@ def render(source: Path, dest: Path, start: int) -> ffmpeg.Streams:
     )
     if result.returncode:
         log.warning("round video rendering failed: %s", result.stderr.strip()[-500:])
-        raise UserError("Не получилось сделать кружок из этого видео.")
+        raise UserError("round_render_failed")
     streams = ffmpeg.probe(dest)
     if not streams.width:
-        raise UserError("На этом месте в видео уже нет кадров.")
+        raise UserError("no_frames_here")
     return streams

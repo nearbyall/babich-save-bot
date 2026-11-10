@@ -6,31 +6,29 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramAPIError
-from aiogram.types import BotCommand, BotCommandScopeAllGroupChats, BotCommandScopeAllPrivateChats
+from aiogram.types import BotCommandScopeAllGroupChats, BotCommandScopeAllPrivateChats
 
 from . import config, housekeeping
 from .db import Database
 from .media import workspace
 from .telegram.handlers import router
+from .telegram.languages import LanguageMiddleware, dm_commands, group_commands
 
 log = logging.getLogger("bot")
 
-# language_code: (descriptions of /start and /report in DMs, of /dl in groups); None is everyone else
-COMMANDS = {
-    None: ("How to use", "Report a bug or suggest an idea", "Download a video by link"),
-    "ru": ("Как пользоваться", "Ошибка или предложение", "Скачать видео по ссылке"),
-}
+# Menus by the language of the user's Telegram app (None is any other one); the bot itself speaks Russian
+# until the user picks English with /lang, which also sets their own menu
+MENUS = {None: "ru", "ru": "ru", "en": "en"}
 
 
 async def setup_commands(bot: Bot) -> None:
     """The bot's description and "about" text are managed by hand in @BotFather."""
     try:
-        for language, (start, report, dl) in COMMANDS.items():
-            await bot.set_my_commands([BotCommand(command="start", description=start),
-                                       BotCommand(command="report", description=report)],
-                                      scope=BotCommandScopeAllPrivateChats(), language_code=language)
-            await bot.set_my_commands([BotCommand(command="dl", description=dl)],
-                                      scope=BotCommandScopeAllGroupChats(), language_code=language)
+        for language_code, lang in MENUS.items():
+            await bot.set_my_commands(dm_commands(lang), scope=BotCommandScopeAllPrivateChats(),
+                                      language_code=language_code)
+            await bot.set_my_commands(group_commands(lang), scope=BotCommandScopeAllGroupChats(),
+                                      language_code=language_code)
     except TelegramAPIError:
         log.warning("failed to set bot commands", exc_info=True)
 
@@ -44,6 +42,7 @@ async def main() -> None:
     db = Database()
     dp = Dispatcher()
     dp["db"] = db
+    dp.update.outer_middleware(LanguageMiddleware())
     dp.include_router(router)
 
     me = await bot.me()

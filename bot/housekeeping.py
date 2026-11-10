@@ -12,6 +12,7 @@ from aiogram.exceptions import TelegramAPIError
 
 from . import config, jobs
 from .db import Database
+from .i18n import t
 from .media import workspace
 
 log = logging.getLogger(__name__)
@@ -44,10 +45,10 @@ def sweep(db: Database) -> None:
                  freed // 1024, pruned, old_files)
 
 
-async def _notify_owner(bot: Bot, db: Database, text: str) -> None:
+async def _notify_owner(bot: Bot, db: Database, key: str, **params: object) -> None:
     if owner := db.owner_id():
         try:
-            await bot.send_message(owner, text)
+            await bot.send_message(owner, t(key, db.lang(owner), **params))
         except TelegramAPIError:
             log.warning("failed to notify owner", exc_info=True)
 
@@ -62,10 +63,9 @@ async def run(bot: Bot, db: Database) -> None:
                 disk_low = not disk_low
                 if disk_low:
                     log.warning("disk almost full: %d MB free", free_mb)
-                    await _notify_owner(bot, db, f"⚠️ На сервере осталось {free_mb} МБ — загрузки приостановлены, "
-                                                 "пока место не освободится.")
+                    await _notify_owner(bot, db, "disk_low", mb=free_mb)
                 else:
-                    await _notify_owner(bot, db, f"✅ Место на диске освободилось ({free_mb} МБ), загрузки снова работают.")
+                    await _notify_owner(bot, db, "disk_ok", mb=free_mb)
         except Exception:
             log.exception("housekeeping failed")
         await asyncio.sleep(config.HOUSEKEEPING_INTERVAL)

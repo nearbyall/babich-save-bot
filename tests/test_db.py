@@ -36,6 +36,15 @@ def test_reports_remember_their_sender(tmp_path):
     assert db.reporter(11) is None
 
 
+def test_language_is_russian_until_picked(tmp_path):
+    db = Database(tmp_path / "db.sqlite3")
+    assert db.lang(1) == "ru"
+    db.set_lang(1, "en")
+    assert db.lang(1) == "en" and db.lang(2) == "ru"
+    db.set_lang(1, "ru")
+    assert db.lang(1) == "ru"
+
+
 def test_first_user_becomes_the_owner(tmp_path):
     db = Database(tmp_path / "db.sqlite3")
     assert db.remember_owner(1) and not db.remember_owner(2)

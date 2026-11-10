@@ -24,6 +24,7 @@ from aiogram.types import (
 from ... import config
 from ...db import Cached, CachedFile, CachedPost, Database
 from ...errors import UserError
+from ...i18n import t
 from ...links import Link, find_links
 from .. import texts
 from ..delivery import fetch_media, inline_result, input_media
@@ -85,17 +86,17 @@ async def fill_placeholder(bot: Bot, db: Database, link: Link, user_id: int, inl
         if "not modified" in str(e):  # already filled by a parallel request
             return
         log.exception("failed to put media into inline message for %s", link.url)
-        await _show_error(bot, inline_message_id, "Не получилось вставить файл в сообщение. Попробуй ещё раз.")
+        await _show_error(bot, inline_message_id, t("inline_failed"))
     except Exception:
         log.exception("unexpected error for %s", link.url)
-        await _show_error(bot, inline_message_id, texts.FAILED)
+        await _show_error(bot, inline_message_id, t("download_failed"))
 
 
 @router.inline_query()
 async def inline_query(query: InlineQuery, bot: Bot, db: Database) -> None:
     if not (links := find_links(query.query)):
-        await query.answer([], cache_time=3600, button=InlineQueryResultsButton(
-            text="Paste a TikTok/Reels/Shorts link · Вставь ссылку", start_parameter="help"))
+        await query.answer([], cache_time=3600, is_personal=True, button=InlineQueryResultsButton(
+            text=t("inline_hint"), start_parameter="help"))
         return
     link = links[0]
     try:
@@ -105,7 +106,7 @@ async def inline_query(query: InlineQuery, bot: Bot, db: Database) -> None:
     except Exception as e:
         if not isinstance(e, UserError):
             log.exception("unexpected error for %s", link.url)
-        text = str(e) if isinstance(e, UserError) else texts.FAILED
+        text = str(e) if isinstance(e, UserError) else t("download_failed")
         with contextlib.suppress(TelegramAPIError):
             await query.answer([], cache_time=0, is_personal=True,
                                button=InlineQueryResultsButton(text=f"❌ {text}"[:64], start_parameter="help"))
@@ -119,15 +120,16 @@ async def inline_query(query: InlineQuery, bot: Bot, db: Database) -> None:
             description = " · ".join(filter(None, [link.platform, cached.uploader,
                                                    post and texts.post_summary(cached)]))
             await query.answer([inline_result(item, texts.caption(link, cached.uploader),
-                                              title="📥 Отправить" if post else "📥 Отправить видео",
-                                              description=description, reply_markup=keyboard)], cache_time=3600)
+                                              title=t("send") if post else t("send_video"),
+                                              description=description, reply_markup=keyboard)],
+                              cache_time=3600, is_personal=True)
         else:
             # Without a keyboard Telegram doesn't hand back the inline_message_id needed to edit it later
             pid = _placeholders.add(link)
             await query.answer([InlineQueryResultArticle(
                 id=PLACEHOLDER + pid,
-                title="📥 Отправить",
-                description="Ещё скачивается — сообщение обновится само",
+                title=t("send"),
+                description=t("still_downloading"),
                 input_message_content=InputTextMessageContent(message_text=texts.loading(link)),
                 reply_markup=placeholder_keyboard(pid),
             )], cache_time=0, is_personal=True)
@@ -146,9 +148,9 @@ async def placeholder_refresh(callback: CallbackQuery, callback_data: LoadButton
     """For when inline feedback is off: anyone can tap to load the file."""
     link = _placeholders.get(callback_data.placeholder)
     if not callback.inline_message_id or not link:
-        await callback.answer("Ссылка устарела — отправь её заново.")
+        await callback.answer(t("link_expired"))
         return
-    await callback.answer("Загружаю…")
+    await callback.answer(t("loading_now"))
     await fill_placeholder(bot, db, link, callback.from_user.id, callback.inline_message_id)
 
 
@@ -172,7 +174,7 @@ async def guest_message(message: Message, bot: Bot, db: Database) -> None:
         item, keyboard = _shown(cached, me.username)
         try:
             await bot.answer_guest_query(query_id, inline_result(item, texts.caption(link, cached.uploader),
-                                                                 title="📥 Отправить", reply_markup=keyboard))
+                                                                 title=t("send"), reply_markup=keyboard))
             return
         except TelegramBadRequest as e:
             log.warning("cached file for %s is unusable in guest mode (%s)", link.key, e)

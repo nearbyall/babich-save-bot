@@ -28,5 +28,5 @@ def pcm(video: Path, rate: int) -> bytes:
 def _with_sound(video: Path) -> ffmpeg.Streams:
     streams = ffmpeg.probe(video)
     if not streams.audio:
-        raise UserError("В этом видео нет звука.")
+        raise UserError("no_sound")
     return streams
