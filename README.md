@@ -36,10 +36,10 @@ opens the DM with the bot (`/start tt_<id>` / `ig_<code>`), and the whole post a
 
 **Shazam**: the bot listens to the video's sound in 12-second windows, until the first match: the middle, then the
 start and the end. It uses Shazam's unofficial API ([shazamio](https://github.com/shazamio/ShazamIO)) and replies
-with the cover art, title, album, year and links to Shazam, Apple Music, Spotify and YouTube Music. Shazam answers
-about 3 requests a minute from one IP, so requests wait in a queue. The result, "not recognized" included, is
-remembered for each video, so a repeated tap answers at once. Videos without sound (Telegram turns them into GIFs)
-get no Shazam or audio buttons.
+with the cover art, title, album, year and links to Shazam, Apple Music, Spotify, Yandex Music and YouTube Music.
+Shazam answers about 3 requests a minute from one IP, so requests wait in a queue. The result, "not recognized"
+included, is remembered for each video, so a repeated tap answers at once. Videos without sound (Telegram turns
+them into GIFs) get no Shazam or audio buttons.
 
 **Audio**: AAC sound is copied into M4A without re-encoding (anything else becomes AAC 192k), and the cover is a
 frame of the video. If the track has been recognized, the file is named after it, otherwise «Звук из TikTok»

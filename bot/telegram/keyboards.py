@@ -103,6 +103,7 @@ def track_keyboard(track: Track) -> InlineKeyboardMarkup:
     query = quote(f"{track.artist} {track.title}")
     links = [("Shazam", track.shazam_url), ("Apple Music", track.apple_music_url),
              ("Spotify", f"https://open.spotify.com/search/{query}"),
+             (t("yandex_music"), f"https://music.yandex.ru/search?text={query}"),
              ("YouTube Music", f"https://music.youtube.com/search?q={query}")]
     buttons = [InlineKeyboardButton(text=label, url=url) for label, url in links if url]
     return InlineKeyboardMarkup(inline_keyboard=[buttons[i:i + 2] for i in range(0, len(buttons), 2)])

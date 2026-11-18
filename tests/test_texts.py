@@ -9,10 +9,10 @@ COMMON = ["TikTok", "Instagram", "YouTube Shorts", "@savebot", "/dl", "×0.25–
 
 @pytest.mark.parametrize("lang, feature", [("ru", f) for f in COMMON + [
     "слайдшоу", "Весь пост", "🎵 Шазам", "🎧 Аудио", "⚪ Кружок", "перешли", "🎭 Стикер", "круг", "стикерпак",
-    "идея", "English",
+    "идея", "English", "Spotify", "Яндекс Музыку",
 ]] + [("en", f) for f in COMMON + [
     "slideshow", "Whole post", "🎵 Shazam", "🎧 Audio", "⚪ Round video", "forward", "🎭 Sticker", "circle",
-    "sticker pack", "idea", "Русский",
+    "sticker pack", "idea", "Русский", "Spotify", "Yandex Music",
 ]])
 def test_help_lists_every_feature(lang, feature):
     assert feature in t("help", lang, username="savebot")

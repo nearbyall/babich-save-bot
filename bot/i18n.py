@@ -32,7 +32,8 @@ HELP_RU = (
     "💬 Любой чат: набери <code>@{username} ссылка</code> и нажми на результат или просто отправь. "
     "У фото-постов — первое фото и кнопка «Весь пост».\n"
     "👥 Группы, где я есть: <code>/dl ссылка</code> или ответь <code>/dl</code> на сообщение со ссылкой.\n"
-    "🎬 Под видео в личке: «🎵 Шазам» — узнать, что за трек, «🎧 Аудио» — звук отдельным файлом, "
+    "🎬 Под видео в личке: «🎵 Шазам» — узнать, что за трек, со ссылками на Spotify, Apple Music и Яндекс "
+    "Музыку, «🎧 Аудио» — звук отдельным файлом, "
     "«⚪ Кружок» — видеосообщение, по минуте. Пришли или перешли мне любое видео, GIF или кружок — "
     "под ним будут те же кнопки.\n"
     "🎭 Видеостикеры: «🎭 Стикер» под видео. Кнопки под стикером двигают его, меняют скорость (×0.25–×8) "
@@ -48,7 +49,8 @@ HELP_EN = (
     "💬 Any chat: type <code>@{username} link</code> and tap the result, or just send it. "
     "Photo posts show the first photo and a «Whole post» button.\n"
     "👥 Groups I'm in: <code>/dl link</code>, or reply <code>/dl</code> to a message with a link.\n"
-    "🎬 Under a video in our chat: «🎵 Shazam» finds out what track is playing, «🎧 Audio» sends its sound "
+    "🎬 Under a video in our chat: «🎵 Shazam» finds out what track is playing, with links to Spotify, "
+    "Apple Music and Yandex Music, «🎧 Audio» sends its sound "
     "as an audio file, «⚪ Round video» makes a round video message of it, a minute at a time. Send or forward "
     "me any video, GIF or round video to get these buttons under it too.\n"
     "🎭 Video stickers: tap «🎭 Sticker» under a video. Buttons under the sticker move it, change the speed "
@@ -132,6 +134,7 @@ TEXTS: dict[str, tuple[str, str]] = {
     "btn_audio": ("🎧 Аудио", "🎧 Audio"),
     "btn_sticker": ("🎭 Стикер", "🎭 Sticker"),
     "btn_round": ("⚪ Кружок", "⚪ Round video"),
+    "yandex_music": ("Яндекс Музыка", "Yandex Music"),
     "video_gone": ("Видео не найдено — пришли его заново.", "Video not found, send it again."),
     "video_deleted": ("Видео удалено — пришли его заново.", "The video has been deleted, send it again."),
     "video_missing": ("Не вижу видео — пришли его заново.", "I can't see the video, send it again."),

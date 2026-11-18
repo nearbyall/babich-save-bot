@@ -92,9 +92,14 @@ def test_track_keyboard_links():
     assert [[(b.text, b.url) for b in row] for row in track_keyboard(full).inline_keyboard] == [
         [("Shazam", "https://shazam/x"), ("Apple Music", "https://apple/x")],
         [("Spotify", "https://open.spotify.com/search/DotEXE%20Monster"),
-         ("YouTube Music", "https://music.youtube.com/search?q=DotEXE%20Monster")],
+         ("Яндекс Музыка", "https://music.yandex.ru/search?text=DotEXE%20Monster")],
+        [("YouTube Music", "https://music.youtube.com/search?q=DotEXE%20Monster")],
     ]
-    assert _labels(track_keyboard(Track("T", "A"))) == [["Spotify", "YouTube Music"]]
+    assert _labels(track_keyboard(Track("T", "A"))) == [["Spotify", "Яндекс Музыка"], ["YouTube Music"]]
+
+
+def test_track_keyboard_in_english(english):
+    assert "Yandex Music" in _labels(track_keyboard(Track("T", "A")))[0]
 
 
 def test_sticker_keyboard_at_the_start_of_a_vertical_video():
