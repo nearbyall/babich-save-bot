@@ -18,6 +18,13 @@ class LoadButton(CallbackData, prefix="load"):
     placeholder: str
 
 
+class DonateButton(CallbackData, prefix="donate"):
+    stars: int
+
+
+DONATIONS = (50, 100, 250, 500, 1000)
+
+
 class CutButton(CallbackData, prefix="stk"):
     start: float
     length: float
@@ -97,6 +104,12 @@ def round_keyboard(start: int, duration: int | None) -> InlineKeyboardMarkup | N
         buttons.append(InlineKeyboardButton(text=f"{format_time(after)}–{format_time(end)} ▶️",
                                             callback_data=RoundButton(start=after).pack()))
     return InlineKeyboardMarkup(inline_keyboard=[buttons]) if buttons else None
+
+
+def donate_keyboard() -> InlineKeyboardMarkup:
+    buttons = [InlineKeyboardButton(text=f"⭐ {stars}", callback_data=DonateButton(stars=stars).pack())
+               for stars in DONATIONS]
+    return InlineKeyboardMarkup(inline_keyboard=[buttons[:3], buttons[3:]])
 
 
 def track_keyboard(track: Track) -> InlineKeyboardMarkup:

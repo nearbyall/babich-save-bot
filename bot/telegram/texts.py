@@ -1,6 +1,8 @@
 """Texts put together from data; the words come from i18n."""
 import html
 
+from aiogram.types import User
+
 from ..db import CachedPost
 from ..i18n import t
 from ..links import Link
@@ -29,6 +31,16 @@ def post_summary(post: CachedPost) -> str:
     if videos := len(post.items) - photos:
         parts.append(t("video" if videos == 1 else "videos", n=videos))
     return t("and").join(parts) + (t("with_sound") if post.audio else "")
+
+
+def who(user: User) -> str:
+    """The user as the owner sees them: a link to the profile, @username and the language of their app."""
+    parts = [f'<a href="tg://user?id={user.id}">{html.escape(user.full_name)}</a>']
+    if user.username:
+        parts.append(f"@{html.escape(user.username)}")
+    if user.language_code:
+        parts.append(html.escape(user.language_code))
+    return " · ".join(parts)
 
 
 def track_caption(track: Track) -> str:

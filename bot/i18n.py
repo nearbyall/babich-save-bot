@@ -41,6 +41,7 @@ HELP_RU = (
     "или <code>0:12-0:20</code> — вырежу с этого места.\n"
     "📮 Нашёл ошибку или есть идея? <code>/report текст</code> — что сломалось или что добавить. Про "
     "конкретное сообщение — ответь на него <code>/report</code>. Разработчик получит и сможет ответить здесь.\n"
+    "⭐ Нравится бот? Поддержи его звёздами — /donate\n"
     "🌐 English — /lang"
 )
 HELP_EN = (
@@ -58,6 +59,7 @@ HELP_EN = (
     "Reply to the video with <code>0:12</code> or <code>0:12-0:20</code> to cut from that moment.\n"
     "📮 Found a bug or have an idea? <code>/report your text</code>: what's broken or what you'd like added. "
     "About a particular message, reply <code>/report</code> to it. The developer gets it and can answer you here.\n"
+    "⭐ Like the bot? Support it with Stars: /donate\n"
     "🌐 Русский — /lang"
 )
 
@@ -68,6 +70,7 @@ TEXTS: dict[str, tuple[str, str]] = {
     # Bot menu
     "cmd_start": ("Как пользоваться", "How to use"),
     "cmd_report": ("Ошибка или предложение", "Report a bug or suggest an idea"),
+    "cmd_donate": ("Поддержать звёздами", "Support with Stars"),
     "cmd_lang": ("Язык · Language", "Language · Язык"),
     "cmd_dl": ("Скачать видео по ссылке", "Download a video by link"),
 
@@ -215,7 +218,22 @@ TEXTS: dict[str, tuple[str, str]] = {
                       "❌ Couldn't send the report. Try again a bit later."),
     "report_answer": ("💬 Ответ на твой репорт:", "💬 An answer to your report:"),
 
+    # Donations
+    "donate_choose": ("⭐ Бот бесплатный. Если он тебе пригодился, поддержи его звёздами — они пойдут на сервер и "
+                      "продвижение.\n\nВыбери сумму или отправь <code>/donate 300</code> — любое число от 1 до {max}.",
+                      "⭐ The bot is free. If it's been useful, support it with Stars: they go to the server and to "
+                      "promoting it.\n\nPick an amount or send <code>/donate 300</code>, any number from 1 to {max}."),
+    "donate_title": ("Поддержка бота", "Support the bot"),
+    "donate_description": ("Добровольное пожертвование звёздами. Спасибо! Вопросы по оплате — /paysupport",
+                           "A voluntary donation in Stars. Thank you! Questions about the payment: /paysupport"),
+    "donate_label": ("Пожертвование", "Donation"),
+    "donate_failed": ("Не получилось принять оплату — попробуй ещё раз.", "Couldn't take the payment, try again."),
+    "donate_thanks": ("💛 Спасибо за {stars} ⭐! Это правда помогает.",
+                      "💛 Thank you for the {stars} ⭐! It really helps."),
+
     # For the owner
+    "donation": ("⭐ Донат: {stars}\n👤 {who}\n🧾 <code>{charge}</code> — ID платежа, нужен для возврата",
+                 "⭐ Donation: {stars}\n👤 {who}\n🧾 <code>{charge}</code>, the payment ID, needed for a refund"),
     "report_mark": ("📮 Репорт", "📮 Report"),
     "report_no_text": ("<i>без описания</i>", "<i>no description</i>"),
     "report_reply_hint": ("↩️ Ответь на это сообщение — перешлю ответ.",

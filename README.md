@@ -20,6 +20,7 @@ Shorts from a link.
   «🎬 Что сделать с этим видео?» ("what to do with this video?") with the same buttons.
 - **Bugs and ideas (DM)**: `/report text` about what's broken or what to add, or `/report` in reply to the
   message it's about. The owner gets it and can answer.
+- **Donations (DM)**: `/donate` to support the bot with Telegram Stars.
 - **Language (DM)**: `/lang` switches between Russian, the default, and English.
 
 **Languages**: the bot speaks Russian to everyone until they pick English with `/lang` (or `/lang en`, `/lang ru`).
@@ -75,6 +76,12 @@ sent to the bot the buttons sit on the bot's reply and work on the video it repl
 screenshot, if there is one. The owner's reply to a report goes to the person, as text or with any attachment. A
 bare `/report` asks what it's about, and the answer to that question becomes the report. One person can send a
 report every 30 seconds.
+
+**Donations**: `/donate` offers ⭐ 50, 100, 250, 500 and 1000, and `/donate 300` sends an invoice for any amount
+from 1 to 10000 at once. The invoice is in Telegram Stars (`XTR`), so no payment provider is needed. The bot
+confirms only its own donations before Telegram charges, thanks the person, and tells the owner who paid and the
+payment ID, which a refund needs. `/paysupport`, which Telegram requires of bots that take payments, works like
+`/report`. The Stars land on the bot's balance, which the owner sees in @BotFather.
 
 Videos are downloaded by [yt-dlp](https://github.com/yt-dlp/yt-dlp) as H.264/MP4 up to 1080p, or in lower quality
 when that doesn't fit the Bot API limit (50 MB). Sent file_ids are cached in SQLite, so a repeated link is
@@ -177,10 +184,10 @@ bot/
     rounds.py          a round video from a video in the chat
     reports.py         bug reports and ideas to the owner, the owner's answers
     keyboards.py       buttons and their callback data
-    texts.py           texts put together from data: captions, post summaries, sound names
+    texts.py           texts put together from data: captions, post summaries, sound names, the user line
     languages.py       language middleware, command menus, picking a language
     messages.py        reading incoming messages
-    handlers/          routers: languages → reports → stickers → sounds → rounds → chats → inline → fallback
+    handlers/          routers: languages → donations → reports → stickers → sounds → rounds → chats → inline → fallback
 tests/                 unit tests (pytest)
 ```
 

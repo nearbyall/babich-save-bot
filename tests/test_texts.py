@@ -4,7 +4,7 @@ from bot.i18n import t
 from bot.media.shazam import Track
 from bot.telegram.texts import help_text, sound_names, track_caption
 
-COMMON = ["TikTok", "Instagram", "YouTube Shorts", "@savebot", "/dl", "×0.25–×8", "0:12-0:20", "/report", "/lang"]
+COMMON = ["TikTok", "Instagram", "YouTube Shorts", "@savebot", "/dl", "×0.25–×8", "0:12-0:20", "/report", "/lang", "/donate"]
 
 
 @pytest.mark.parametrize("lang, feature", [("ru", f) for f in COMMON + [

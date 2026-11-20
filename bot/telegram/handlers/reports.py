@@ -46,9 +46,10 @@ async def report_described(message: Message, bot: Bot, db: Database) -> None:
     await _report(message, bot, db, message.text or message.caption or "", about=None)
 
 
-@router.message(Command("report"))
+@router.message(Command("report", "paysupport"))
 async def report_command(message: Message, bot: Bot, db: Database, command: CommandObject) -> None:
-    """/report text, or /report in reply to the message it's about; a bare /report asks what it is."""
+    """/report text, or /report in reply to the message it's about; a bare /report asks what it is.
+    /paysupport, which Telegram requires of bots that take payments, is the same."""
     about = message.reply_to_message
     if not command.args and not about and message.content_type == ContentType.TEXT:
         await message.answer(t("report_prompt"),

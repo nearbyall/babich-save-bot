@@ -9,6 +9,7 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import Message, ReplyParameters, User
 
 from ..i18n import Lang, t
+from .texts import who
 
 log = logging.getLogger(__name__)
 
@@ -21,13 +22,8 @@ _last_report: dict[int, float] = {}
 def header(user: User, text: str, lang: Lang) -> str:
     """The report as the owner gets it, in the owner's language; searching for its #u<id> tag finds all reports
     of that user."""
-    who = [f'<a href="tg://user?id={user.id}">{html.escape(user.full_name)}</a>']
-    if user.username:
-        who.append(f"@{html.escape(user.username)}")
-    if user.language_code:
-        who.append(html.escape(user.language_code))
     body = html.escape(text.strip()[:MAX_TEXT]) or t("report_no_text", lang)
-    return (f"{t('report_mark', lang)} #u{user.id}\n👤 {' · '.join(who)}\n"
+    return (f"{t('report_mark', lang)} #u{user.id}\n👤 {who(user)}\n"
             f"<blockquote expandable>{body}</blockquote>\n{t('report_reply_hint', lang)}")
 
 

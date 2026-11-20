@@ -30,7 +30,7 @@ class LanguageMiddleware(BaseMiddleware):
 
 def dm_commands(lang: Lang) -> list[BotCommand]:
     return [BotCommand(command=command, description=t(f"cmd_{command}", lang))
-            for command in ("start", "report", "lang")]
+            for command in ("start", "report", "donate", "lang")]
 
 
 def group_commands(lang: Lang) -> list[BotCommand]:
