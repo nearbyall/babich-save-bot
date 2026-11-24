@@ -83,6 +83,20 @@ confirms only its own donations before Telegram charges, thanks the person, and 
 payment ID, which a refund needs. `/paysupport`, which Telegram requires of bots that take payments, works like
 `/report`. The Stars land on the bot's balance, which the owner sees in @BotFather.
 
+**Stats** (`/stats`, for the owner only): users in all, new today and those who came back on another day; active
+today, in 7 and in 30 days; where they used the bot (DM, groups, inline, guest mode); how many groups the bot is in
+and how many users blocked it. For the last 7 days it adds links by platform with errors, Shazam, audio, round
+videos, stickers, reports and donations, and for the last 30 days where new users came from. The bot keeps only
+user ids, the days and places they used it and counts per day, never names or what was sent. Days are UTC, daily
+visits are kept for 60 days and the totals for good. Counting started on 2026-11-24, so earlier users show up as new
+when they next use the bot. In groups only messages meant for the bot count (a command to it, a reply to it or a
+mention), and a group is known once the bot is added to it or sees a message there. Inline downloads count only
+with inline feedback on in @BotFather.
+
+**Ads and other links**: `t.me/babichsavebot?start=<name>` (letters, digits, `_` and `-`), such as
+`?start=ad_nov`, opens the help as usual, and `/stats` shows how many new users each name brought. Taps on
+«🖼 Весь пост» count separately.
+
 Videos are downloaded by [yt-dlp](https://github.com/yt-dlp/yt-dlp) as H.264/MP4 up to 1080p, or in lower quality
 when that doesn't fit the Bot API limit (50 MB). Sent file_ids are cached in SQLite, so a repeated link is
 delivered instantly. The videos themselves aren't kept on disk: the temp file is deleted right after sending.
@@ -160,7 +174,7 @@ bot/
   __main__.py          startup: bot, routers, background tasks
   config.py            settings from .env
   links.py             parsing and normalizing links, deep link payloads
-  db.py                file_id cache (SQLite), the owner, report senders, users' languages
+  db.py                file_id cache (SQLite), the owner, report senders, users' languages, stats
   i18n.py              every text in Russian and English, the language of the update being handled
   errors.py            UserError, an error with a message for the user
   jobs.py              requests in progress (a restart waits for them), guard against repeated taps
@@ -186,8 +200,10 @@ bot/
     keyboards.py       buttons and their callback data
     texts.py           texts put together from data: captions, post summaries, sound names, the user line
     languages.py       language middleware, command menus, picking a language
+    stats.py           stats middleware: who used the bot, where, and where they came from
     messages.py        reading incoming messages
-    handlers/          routers: languages → donations → reports → stickers → sounds → rounds → chats → inline → fallback
+    handlers/          routers: languages → stats → donations → reports → stickers → sounds → rounds → chats →
+                       inline → fallback
 tests/                 unit tests (pytest)
 ```
 

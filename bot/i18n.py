@@ -246,4 +246,30 @@ TEXTS: dict[str, tuple[str, str]] = {
                  "⚠️ {mb} MB left on the server, downloads are paused until there's more space."),
     "disk_ok": ("✅ Место на диске освободилось ({mb} МБ), загрузки снова работают.",
                 "✅ Disk space is back ({mb} MB), downloads work again."),
+
+    # /stats, for the owner
+    "stats_empty": ("📊 Пока нечего показать: считаю с первого действия пользователя после обновления.",
+                    "📊 Nothing to show yet: counting starts with a user's first action after the update."),
+    "stats_title": ("📊 <b>Статистика</b> с {since}, дни по UTC", "📊 <b>Stats</b> since {since}, days in UTC"),
+    "stats_users": ("👥 Пользователи: {users} · новых сегодня {new} · возвращались {returning}",
+                    "👥 Users: {users} · new today {new} · came back {returning}"),
+    "stats_active": ("📈 Активные: сегодня {today} · за 7 дней {week} · за 30 дней {month}",
+                     "📈 Active: today {today} · in 7 days {week} · in 30 days {month}"),
+    "stats_groups": ("🏠 Групп с ботом: {groups} · заблокировали бота: {blocked}",
+                     "🏠 Groups with the bot: {groups} · blocked the bot: {blocked}"),
+    "stats_week": ("За 7 дней", "In 7 days"),
+    "stats_places": ("💬 Где: {places}", "💬 Where: {places}"),
+    "stats_links": ("📥 Ссылок: {links} · ошибок {fails}", "📥 Links: {links} · errors {fails}"),
+    "stats_features": ("🎵 Шазам {shazam} · 🎧 Аудио {audio} · ⚪ Кружки {round} · 🎭 Стикеры {sticker} · "
+                       "➕ В пак {pack}",
+                       "🎵 Shazam {shazam} · 🎧 Audio {audio} · ⚪ Round videos {round} · 🎭 Stickers {sticker} · "
+                       "➕ To packs {pack}"),
+    "stats_support": ("📮 Репорты {reports} · ⭐ Донаты {donations} на {stars} ⭐",
+                      "📮 Reports {reports} · ⭐ Donations {donations}, {stars} ⭐ in all"),
+    "stats_sources": ("Откуда новые за 30 дней", "Where new users came from, in 30 days"),
+    "place_dm": ("личка", "DM"),
+    "place_group": ("группы", "groups"),
+    "place_inline": ("инлайн", "inline"),
+    "place_guest": ("гостевой режим", "guest mode"),
+    "place_post": ("кнопка «Весь пост»", "the «Whole post» button"),
 }

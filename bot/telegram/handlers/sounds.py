@@ -2,6 +2,7 @@
 from aiogram import Bot, Router
 from aiogram.types import CallbackQuery, Message
 
+from ...db import Database
 from ...i18n import t
 from .. import sounds
 from ..clips import clip_of, video_message
@@ -24,12 +25,14 @@ async def _source(callback: CallbackQuery, started: str) -> Message | None:
 
 
 @router.callback_query(TrackButton.filter())
-async def track_pressed(callback: CallbackQuery, bot: Bot) -> None:
+async def track_pressed(callback: CallbackQuery, bot: Bot, db: Database) -> None:
     if source := await _source(callback, t("listening")):
+        db.count("shazam")
         await sounds.identify(bot, source, clip_of(source), callback.from_user)
 
 
 @router.callback_query(SoundButton.filter())
-async def sound_pressed(callback: CallbackQuery, bot: Bot) -> None:
+async def sound_pressed(callback: CallbackQuery, bot: Bot, db: Database) -> None:
     if source := await _source(callback, t("extracting")):
+        db.count("audio")
         await sounds.send_sound(bot, source, clip_of(source), callback.from_user)

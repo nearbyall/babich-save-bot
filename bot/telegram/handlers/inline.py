@@ -8,7 +8,7 @@ import hashlib
 import logging
 from collections import OrderedDict
 
-from aiogram import Bot, F, Router
+from aiogram import Bot, Router
 from aiogram.exceptions import TelegramAPIError, TelegramBadRequest
 from aiogram.types import (
     CallbackQuery,
@@ -80,16 +80,19 @@ async def fill_placeholder(bot: Bot, db: Database, link: Link, user_id: int, inl
         item, keyboard = _shown(cached, me.username)
         await bot.edit_message_media(media=input_media(item, texts.caption(link, cached.uploader)),
                                      inline_message_id=inline_message_id, reply_markup=keyboard)
+        return
     except UserError as e:
-        await _show_error(bot, inline_message_id, str(e))
+        error = str(e)
     except TelegramBadRequest as e:
         if "not modified" in str(e):  # already filled by a parallel request
             return
         log.exception("failed to put media into inline message for %s", link.url)
-        await _show_error(bot, inline_message_id, t("inline_failed"))
+        error = t("inline_failed")
     except Exception:
         log.exception("unexpected error for %s", link.url)
-        await _show_error(bot, inline_message_id, t("download_failed"))
+        error = t("download_failed")
+    db.count(f"fail:{link.platform}")
+    await _show_error(bot, inline_message_id, error)
 
 
 @router.inline_query()
@@ -137,9 +140,13 @@ async def inline_query(query: InlineQuery, bot: Bot, db: Database) -> None:
         log.info("inline query for %s expired: %s", link.key, e)
 
 
-@router.chosen_inline_result(F.result_id.startswith(PLACEHOLDER))
-async def placeholder_sent(result: ChosenInlineResult, bot: Bot, db: Database) -> None:
-    if result.inline_message_id and (links := find_links(result.query)):
+@router.chosen_inline_result()
+async def result_sent(result: ChosenInlineResult, bot: Bot, db: Database) -> None:
+    """Telegram reports which result was sent (inline feedback in @BotFather); a placeholder gets filled."""
+    if not (links := find_links(result.query)):
+        return
+    db.count(f"link:{links[0].platform}")
+    if result.result_id.startswith(PLACEHOLDER) and result.inline_message_id:
         await fill_placeholder(bot, db, links[0], result.from_user.id, result.inline_message_id)
 
 
@@ -169,6 +176,7 @@ async def guest_message(message: Message, bot: Bot, db: Database) -> None:
             await bot.answer_guest_query(query_id, _article(texts.help_text(me.username)))
         return
     link = links[0]
+    db.count(f"link:{link.platform}")
 
     if cached := db.get(link.key):
         item, keyboard = _shown(cached, me.username)

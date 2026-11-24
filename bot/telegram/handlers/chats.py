@@ -18,12 +18,10 @@ from ...media.models import Download, Video
 from .. import texts
 from ..delivery import send_cached, upload
 from ..keyboards import video_keyboard
-from ..messages import is_from_bot, links_from, mentions, requester, topic
+from ..messages import GROUP_CHATS, is_from_bot, links_from, mentions, requester, topic
 
 log = logging.getLogger(__name__)
 router = Router(name="chats")
-
-GROUP_CHATS = {ChatType.GROUP, ChatType.SUPERGROUP}
 
 
 def _video_markup(message: Message, media: Download | Cached) -> InlineKeyboardMarkup | None:
@@ -57,10 +55,12 @@ async def _download_and_send(message: Message, link: Link, db: Database) -> None
         try:
             media = await download(link, requester(message))
         except UserError as e:
+            db.count(f"fail:{link.platform}")
             await message.reply(f"❌ {e}")
             return
         except Exception:
             log.exception("unexpected error downloading %s", link.url)
+            db.count(f"fail:{link.platform}")
             await message.reply(f"❌ {t('download_failed')}")
             return
         try:
@@ -69,6 +69,7 @@ async def _download_and_send(message: Message, link: Link, db: Database) -> None
                                      reply_parameters=message.as_reply_parameters(allow_sending_without_reply=True))
         except TelegramAPIError:
             log.exception("failed to upload %s", link.url)
+            db.count(f"fail:{link.platform}")
             await message.reply(f"❌ {t('file_rejected')}")
             return
         finally:
@@ -79,6 +80,7 @@ async def _download_and_send(message: Message, link: Link, db: Database) -> None
 async def handle_links(message: Message, links: list[Link], db: Database) -> None:
     with jobs.tracked():
         for link in links[: config.MAX_LINKS_PER_MESSAGE]:
+            db.count(f"link:{link.platform}")
             if not await _send_from_cache(message, link, db):
                 await _download_and_send(message, link, db)
 

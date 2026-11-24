@@ -1,9 +1,10 @@
-"""file_id cache of everything already uploaded to Telegram, the bot owner, whom reports came from and the
-languages users picked."""
+"""file_id cache of everything already uploaded to Telegram, the bot owner, whom reports came from, the
+languages users picked and the numbers for /stats."""
+import datetime
 import json
 import sqlite3
 import time
-from dataclasses import asdict, astuple, dataclass
+from dataclasses import asdict, astuple, dataclass, field
 from pathlib import Path
 from typing import Literal
 
@@ -32,6 +33,29 @@ class CachedPost:
 
 Cached = CachedFile | CachedPost
 
+
+@dataclass
+class Stats:
+    since: str | None  # the first day counted
+    users: int
+    new: int  # today
+    returning: int  # users seen on more than one day
+    active: tuple[int, int, int]  # users seen today, in 7 and in 30 days
+    places: dict[str, int] = field(default_factory=dict)  # users in 7 days by where they used the bot
+    sources: dict[str, int] = field(default_factory=dict)  # new users in 30 days by where they came from
+    groups: int = 0
+    blocked: int = 0
+    events: dict[str, int] = field(default_factory=dict)  # in 7 days
+
+
+def _utc_today() -> datetime.date:
+    return datetime.datetime.now(datetime.UTC).date()
+
+
+def day(days_ago: int = 0) -> str:
+    """Stats count UTC days."""
+    return (_utc_today() - datetime.timedelta(days=days_ago)).isoformat()
+
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS videos (
     key TEXT PRIMARY KEY,
@@ -52,6 +76,28 @@ CREATE TABLE IF NOT EXISTS posts (
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS reports (message_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, lang TEXT NOT NULL);
+-- Stats: who used the bot on which days and where, never what they sent
+CREATE TABLE IF NOT EXISTS people (
+    id INTEGER PRIMARY KEY,
+    first_day TEXT NOT NULL,
+    last_day TEXT NOT NULL,
+    days INTEGER NOT NULL,
+    source TEXT NOT NULL,
+    blocked INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS seen (
+    day TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    place TEXT NOT NULL,
+    PRIMARY KEY (day, user_id, place)
+) WITHOUT ROWID;
+CREATE TABLE IF NOT EXISTS groups (id INTEGER PRIMARY KEY, present INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS events (
+    day TEXT NOT NULL,
+    name TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    PRIMARY KEY (day, name)
+) WITHOUT ROWID;
 """
 
 
@@ -60,6 +106,9 @@ class Database:
         path.parent.mkdir(parents=True, exist_ok=True)
         self._db = sqlite3.connect(path)
         self._db.executescript(_SCHEMA)
+        # Marks already written, so that every update doesn't write to the disk
+        self._seen_day, self._seen = "", set[tuple[int, str]]()
+        self._groups = {row[0] for row in self._db.execute("SELECT id FROM groups WHERE present")}
 
     def get(self, key: str) -> Cached | None:
         row = self._db.execute(
@@ -136,3 +185,66 @@ class Database:
     def set_lang(self, user_id: int, lang: Lang) -> None:
         with self._db:
             self._db.execute("INSERT OR REPLACE INTO users VALUES (?, ?)", (user_id, lang))
+
+    def mark_seen(self, user_id: int, place: str, source: str) -> None:
+        """The user used the bot today in `place`; `source` is where they came from, kept if they're new."""
+        today = day()
+        if self._seen_day != today:
+            self._seen_day, self._seen = today, set()
+        if (user_id, place) in self._seen:
+            return
+        with self._db:
+            if self._db.execute("INSERT OR IGNORE INTO seen VALUES (?, ?, ?)", (today, user_id, place)).rowcount:
+                self._db.execute(
+                    "INSERT INTO people (id, first_day, last_day, days, source) VALUES (?, ?, ?, 1, ?) "
+                    "ON CONFLICT (id) DO UPDATE SET days = days + (last_day != excluded.last_day), "
+                    "last_day = excluded.last_day",
+                    (user_id, today, today, source))
+        self._seen.add((user_id, place))
+
+    def set_blocked(self, user_id: int, blocked: bool) -> None:
+        with self._db:
+            self._db.execute("UPDATE people SET blocked = ? WHERE id = ?", (int(blocked), user_id))
+
+    def mark_group(self, chat_id: int, present: bool = True) -> None:
+        if present and chat_id in self._groups:
+            return
+        with self._db:
+            self._db.execute("INSERT OR REPLACE INTO groups VALUES (?, ?)", (chat_id, int(present)))
+        if present:
+            self._groups.add(chat_id)
+        else:
+            self._groups.discard(chat_id)
+
+    def count(self, event: str, n: int = 1) -> None:
+        with self._db:
+            self._db.execute("INSERT INTO events VALUES (?, ?, ?) "
+                             "ON CONFLICT (day, name) DO UPDATE SET count = count + excluded.count",
+                             (day(), event, n))
+
+    def forget_old_visits(self, keep_days: int) -> int:
+        """Daily visits are only needed for the 30-day numbers; people keep their totals."""
+        with self._db:
+            return self._db.execute("DELETE FROM seen WHERE day < ?", (day(keep_days),)).rowcount
+
+    def stats(self) -> Stats:
+        def one(sql: str, *args: object) -> int:
+            return self._db.execute(sql, args).fetchone()[0] or 0
+
+        def by(sql: str, *args: object) -> dict[str, int]:
+            return dict(self._db.execute(sql + " ORDER BY 2 DESC, 1", args).fetchall())
+
+        today, week, month = day(), day(6), day(29)
+        visits = "SELECT count(DISTINCT user_id) FROM seen WHERE day >= ?"
+        return Stats(
+            since=self._db.execute("SELECT min(first_day) FROM people").fetchone()[0],
+            users=one("SELECT count(*) FROM people"),
+            new=one("SELECT count(*) FROM people WHERE first_day = ?", today),
+            returning=one("SELECT count(*) FROM people WHERE days > 1"),
+            active=(one(visits, today), one(visits, week), one(visits, month)),
+            places=by("SELECT place, count(DISTINCT user_id) FROM seen WHERE day >= ? GROUP BY place", week),
+            sources=by("SELECT source, count(*) FROM people WHERE first_day >= ? GROUP BY source", month),
+            groups=one("SELECT count(*) FROM groups WHERE present"),
+            blocked=one("SELECT count(*) FROM people WHERE blocked"),
+            events=by("SELECT name, sum(count) FROM events WHERE day >= ? GROUP BY name", week),
+        )

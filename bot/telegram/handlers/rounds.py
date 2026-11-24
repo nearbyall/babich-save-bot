@@ -2,6 +2,7 @@
 from aiogram import Bot, Router
 from aiogram.types import CallbackQuery, Message
 
+from ...db import Database
 from ...i18n import t
 from ...media.rounds import LENGTH
 from .. import rounds
@@ -12,7 +13,7 @@ router = Router(name="rounds")
 
 
 @router.callback_query(RoundButton.filter())
-async def round_pressed(callback: CallbackQuery, callback_data: RoundButton, bot: Bot) -> None:
+async def round_pressed(callback: CallbackQuery, callback_data: RoundButton, bot: Bot, db: Database) -> None:
     message = callback.message
     source = None
     if isinstance(message, Message):
@@ -29,4 +30,5 @@ async def round_pressed(callback: CallbackQuery, callback_data: RoundButton, bot
         await callback.answer(t("round_first_minute"))
     else:
         await callback.answer(t("round_making"))
+    db.count("round")
     await rounds.make(bot, source, clip, callback.from_user, callback_data.start)

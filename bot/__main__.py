@@ -13,6 +13,7 @@ from .db import Database
 from .media import workspace
 from .telegram.handlers import router
 from .telegram.languages import LanguageMiddleware, dm_commands, group_commands
+from .telegram.stats import StatsMiddleware
 
 log = logging.getLogger("bot")
 
@@ -43,6 +44,7 @@ async def main() -> None:
     dp = Dispatcher()
     dp["db"] = db
     dp.update.outer_middleware(LanguageMiddleware())
+    dp.update.outer_middleware(StatsMiddleware())
     dp.include_router(router)
 
     me = await bot.me()

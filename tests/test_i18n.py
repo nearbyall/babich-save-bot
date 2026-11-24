@@ -49,7 +49,7 @@ def test_every_key_asked_for_exists():
 def test_every_text_is_used():
     used = {s for tree in TREES.values() for s in _strings(tree)}
     unused = [key for key in TEXTS if key != "help" and key not in used and not any(
-        key.startswith(prefix) for prefix in ("cmd_",))]
+        key.startswith(prefix) for prefix in ("cmd_", "place_"))]
     assert not unused
 
 

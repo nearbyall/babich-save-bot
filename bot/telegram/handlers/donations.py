@@ -62,6 +62,8 @@ async def checkout(query: PreCheckoutQuery) -> None:
 async def donated(message: Message, bot: Bot, db: Database) -> None:
     payment = message.successful_payment
     log.info("donation of %s stars from %s", payment.total_amount, message.from_user.id)
+    db.count("donation")
+    db.count("stars", payment.total_amount)
     await message.answer(t("donate_thanks", stars=payment.total_amount))
     if not (owner := db.owner_id()):
         return

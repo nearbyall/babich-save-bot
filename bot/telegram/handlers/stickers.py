@@ -7,6 +7,7 @@ from aiogram.enums import ChatType
 from aiogram.exceptions import TelegramAPIError
 from aiogram.types import CallbackQuery, Message
 
+from ...db import Database
 from ...i18n import t
 from ...media.sticker import Cut, parse_time
 from ..keyboards import CurrentButton, CutButton, KeepButton, describe, is_kept, kept_keyboard
@@ -19,7 +20,7 @@ router.message.filter(F.chat.type == ChatType.PRIVATE)
 
 
 @router.callback_query(CutButton.filter())
-async def cut_pressed(callback: CallbackQuery, callback_data: CutButton, bot: Bot) -> None:
+async def cut_pressed(callback: CallbackQuery, callback_data: CutButton, bot: Bot, db: Database) -> None:
     """🎭 under a video, or a move/speed/shape button under a sticker made from it."""
     message = callback.message
     if not isinstance(message, Message):
@@ -39,6 +40,7 @@ async def cut_pressed(callback: CallbackQuery, callback_data: CutButton, bot: Bo
         await callback.answer(f"⏳ {describe(cut, clip and clip.duration)}")
     else:
         await callback.answer(t("making_sticker", seconds=cut.length))
+        db.count("sticker")
     if await make(bot, source, callback.from_user, cut) and redo and not is_kept(message.reply_markup):
         with contextlib.suppress(TelegramAPIError):
             await message.delete()  # replaced by the new cut, unless it's already in the pack
@@ -50,7 +52,7 @@ async def current_pressed(callback: CallbackQuery) -> None:
 
 
 @router.callback_query(KeepButton.filter())
-async def keep_pressed(callback: CallbackQuery, bot: Bot) -> None:
+async def keep_pressed(callback: CallbackQuery, bot: Bot, db: Database) -> None:
     message = callback.message
     if not isinstance(message, Message) or not message.sticker:
         await callback.answer(t("sticker_not_found"))
@@ -64,13 +66,14 @@ async def keep_pressed(callback: CallbackQuery, bot: Bot) -> None:
         log.warning("failed to add sticker to the pack of %s: %s", callback.from_user.id, e)
         await callback.answer(t("pack_failed"), show_alert=True)
         return
+    db.count("pack")
     with contextlib.suppress(TelegramAPIError):
         await message.edit_reply_markup(reply_markup=kept_keyboard(message.reply_markup, pack))
     await callback.answer(t("pack_added"))
 
 
 @router.message(F.text.func(parse_time))
-async def time_sent(message: Message, bot: Bot) -> None:
+async def time_sent(message: Message, bot: Bot, db: Database) -> None:
     """A time in reply to a video: cut the sticker from there."""
     source = message.reply_to_message
     if clip_of(source) is None:
@@ -79,4 +82,5 @@ async def time_sent(message: Message, bot: Bot) -> None:
     if busy(message.from_user.id):
         await message.reply(t("sticker_busy"))
         return
+    db.count("sticker")
     await make(bot, source, message.from_user, Cut.covering(*parse_time(message.text)))

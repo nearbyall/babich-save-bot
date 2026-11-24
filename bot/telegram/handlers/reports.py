@@ -77,5 +77,6 @@ async def _send(message: Message, bot: Bot, db: Database, text: str, about: Mess
         log.exception("failed to send a report from %s", message.from_user.id)
         return False
     db.remember_report(header_id, message.from_user.id)
+    db.count("report")
     log.info("report from %s sent", message.from_user.id)
     return True

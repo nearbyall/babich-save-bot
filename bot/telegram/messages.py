@@ -1,7 +1,10 @@
 """Reading incoming Telegram messages."""
+from aiogram.enums import ChatType
 from aiogram.types import Message
 
 from ..links import Link, find_links
+
+GROUP_CHATS = {ChatType.GROUP, ChatType.SUPERGROUP}
 
 
 def text_of(message: Message | None) -> str:

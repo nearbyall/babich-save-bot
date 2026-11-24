@@ -17,6 +17,8 @@ from .media import workspace
 
 log = logging.getLogger(__name__)
 
+VISITS_KEPT_DAYS = 60  # /stats looks 30 days back
+
 
 def _remove_old_files(directory: Path, max_age_days: int) -> int:
     if not directory.is_dir():
@@ -36,6 +38,7 @@ def _remove_old_files(directory: Path, max_age_days: int) -> int:
 def sweep(db: Database) -> None:
     freed = workspace.cleanup_stale()
     pruned = db.prune(config.CACHE_TTL_DAYS, config.CACHE_MAX_ROWS)
+    db.forget_old_visits(VISITS_KEPT_DAYS)
     old_files = _remove_old_files(config.YTDLP_CACHE_DIR, config.YTDLP_CACHE_TTL_DAYS)
     if workspace.free_disk() < config.MIN_FREE_DISK:
         freed += workspace.cleanup_stale(max_age=0)
